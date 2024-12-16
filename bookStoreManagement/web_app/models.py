@@ -1,5 +1,5 @@
 from web_app import app, db
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum, Time
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum, Time, Float
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 from enum import Enum as StatusAndType
@@ -16,11 +16,13 @@ class Book(db.Model):
     description = Column(String(255), nullable=True)
     original_price = Column(Integer, default=0)
     quantity = Column(Integer, default=1)
-    active = Column(Boolean, default=True)    #True: còn hàng
+    active = Column(Boolean, default=True)  # True: còn hàng
+    average_star = Column(Float, default=0)
     images = relationship('Image', backref='book', lazy='joined')
     categories = relationship(Category, secondary='category_product', lazy='joined',
                               backref=backref('books', lazy=True))
     order_details = relationship('OrderDetail', backref='book')
+    comments = relationship('Comment', backref='book')
 
 
 class Image(db.Model):
@@ -57,10 +59,11 @@ class Order(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_date = Column(DateTime, default=func.now())
     status = Column(Enum(OrderStatus), default=OrderStatus.ORDERED)
-    price_reduction = Column(Integer, default=0)    #Số tiền giảm
+    price_reduction = Column(Integer, default=0)  # Số tiền giảm
     order_details = relationship('OrderDetail', backref='order')
-    sales_agent = Column(Integer, ForeignKey('staff.id'), nullable=True)
-    #nullable=True là để quan hệ many-to-one khi Staff xóa thì khóa ngoại sẽ SET NULL
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    # nullable=True là để quan hệ many-to-one khi Staff xóa thì khóa ngoại sẽ SET NULL
+    customer_id = Column(Integer, ForeignKey('customer.id'), nullable=True)
 
 
 class OrderDetail(db.Model):
@@ -89,6 +92,7 @@ class UserInfo(db.Model):
 class StaffRole(StatusAndType):
     SALES_AGENT = 1
     SECURITY_GUARD = 2
+    ADMIN = 3
 
 
 class Staff(UserInfo):
@@ -119,6 +123,51 @@ class CustomerType(StatusAndType):
 
 class Customer(UserInfo):
     type = Column(Enum(CustomerType), default=CustomerType.REGULAR)
+    orders = relationship(Order, backref='customer', lazy=True)
+    comments = relationship('Comment', backref='customer')
+    customer_owns_voucher = relationship('CustomerOwnsVoucher', backref='customer')
+
+
+class Comment(db.Model):
+    customer_id = Column(ForeignKey(Customer.id), primary_key=True)
+    book_id = Column(ForeignKey(Book.id), primary_key=True)
+    created_date = Column(DateTime, default=func.now())
+    updated_date = Column(DateTime, default=func.now(), onupdate=func.now())
+    content = Column(String(255), nullable=True)
+    star = Column(Integer, default=5)
+
+
+class VoucherType(StatusAndType):
+    FIXED_AMOUNT = 1          # Tiền cố định
+    PERCENTAGE_DISCOUNT = 2  # Giảm theo phần trăm
+
+
+class TermCondition:
+    def is_satisfied(self, context: dict) -> bool:
+        """
+        Kiểm tra xem điều kiện có thỏa mãn không.
+        :param context: Bối cảnh (dữ liệu đầu vào) cần để kiểm tra điều kiện.
+        :return: True nếu điều kiện thỏa mãn, False nếu không.
+        """
+        pass
+
+
+class Voucher(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(10), unique=True, nullable=False)
+    expiry = Column(DateTime, nullable=True)  # Ngày hết hạn
+    voucher_type = Column(Enum(VoucherType), nullable=False)
+    value = Column(Integer, nullable=False)  # Giá trị giảm giá (tiền hoặc %)
+    max_value = Column(Integer, nullable=True)  # Số tiền giảm giá tối đa (nếu áp dụng type PERCENTAGE_DISCOUNT)
+    condition_description = Column(String(255), nullable=True)
+    condition = TermCondition()  # Điều kiện áp dụng voucher (nếu cần)
+    customer_owns_voucher = relationship('CustomerOwnsVoucher', backref='voucher')
+
+
+class CustomerOwnsVoucher(db.Model):
+    customer_id = Column(ForeignKey(Customer.id), primary_key=True)
+    voucher_id = Column(ForeignKey(Voucher.id), primary_key=True)
+    quantity = Column(Integer, default=1)
 
 
 if __name__ == '__main__':
