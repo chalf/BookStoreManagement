@@ -19,7 +19,7 @@ class Book(db.Model):
     active = Column(Boolean, default=True)  # True: còn hàng
     average_star = Column(Float, default=0)
     images = relationship('Image', backref='book', lazy='joined')
-    categories = relationship(Category, secondary='category_product', lazy='joined',
+    categories = relationship(Category, secondary='cate_prod', lazy='joined',
                               backref=backref('books', lazy=True))
     order_details = relationship('OrderDetail', backref='book')
     comments = relationship('Comment', backref='book')
