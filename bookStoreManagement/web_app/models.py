@@ -3,6 +3,9 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, E
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 from enum import Enum as StatusAndType
+from flask_login import UserMixin
+import datetime
+import hashlib
 
 
 class Category(db.Model):
@@ -73,7 +76,7 @@ class OrderDetail(db.Model):
     quantity = Column(Integer, nullable=True)
 
 
-class UserInfo(db.Model):
+class UserInfo(db.Model, UserMixin):
     __abstract__ = True
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -86,7 +89,11 @@ class UserInfo(db.Model):
     last_name = Column(String(50), nullable=False)
     created_date = Column(DateTime, default=func.now())
     last_login_date = Column(DateTime, default=func.now())
-    avatar = Column(String(150), nullable=False)
+    avatar = Column(String(150),
+                    default='https://res.cloudinary.com/dtufi97qw/image/upload/v1734447269/default_avatar_ovzdky.jpg')
+
+    def update_last_login_date(self):
+        self.last_login_date = datetime.datetime.now()
 
 
 class StaffRole(StatusAndType):
@@ -138,7 +145,7 @@ class Comment(db.Model):
 
 
 class VoucherType(StatusAndType):
-    FIXED_AMOUNT = 1          # Tiền cố định
+    FIXED_AMOUNT = 1  # Tiền cố định
     PERCENTAGE_DISCOUNT = 2  # Giảm theo phần trăm
 
 
@@ -172,4 +179,6 @@ class CustomerOwnsVoucher(db.Model):
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
+
+        # s = db.session.get(Staff, 1)
+        db.session.commit()
