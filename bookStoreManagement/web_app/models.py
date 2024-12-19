@@ -4,7 +4,6 @@ from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 from enum import Enum as StatusAndType
 from flask_login import UserMixin
-import datetime
 import hashlib
 
 
@@ -78,7 +77,6 @@ class OrderDetail(db.Model):
 
 class UserInfo(db.Model, UserMixin):
     __abstract__ = True
-
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(100), unique=True, nullable=False)
     password = Column(String(100), nullable=False)
@@ -91,9 +89,6 @@ class UserInfo(db.Model, UserMixin):
     last_login_date = Column(DateTime, default=func.now())
     avatar = Column(String(150),
                     default='https://res.cloudinary.com/dtufi97qw/image/upload/v1734447269/default_avatar_ovzdky.jpg')
-
-    def update_last_login_date(self):
-        self.last_login_date = datetime.datetime.now()
 
 
 class StaffRole(StatusAndType):
