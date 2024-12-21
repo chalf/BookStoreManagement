@@ -42,10 +42,17 @@ def logout_user_process():
 
 @app.route('/register/', methods=['GET', 'POST'])
 def register():
+    # nếu đang đăng nhập thì không hiện form đăng ký
+    if current_user.is_authenticated:
+        return redirect('/')
+    if request.method.__eq__('POST'):
+        userinfo = request.form
+        created_user = dao.create_user(**userinfo)
+        login_user(created_user)
+        return redirect('/')
     return render_template('register.html')
 
 
 if __name__ == '__main__':
     from admin import admin
-
     app.run(debug=True, port=2357)
