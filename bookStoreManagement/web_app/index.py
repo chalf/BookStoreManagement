@@ -14,15 +14,19 @@ def login_process():
     # nếu đăng nhập rồi thì không hiện form đăng nhập nữa
     if current_user.is_authenticated:
         return redirect('/')
+    error = None
     if request.method.__eq__('POST'):
         username = request.form.get('username')
         password = request.form.get('password')
         user = dao.auth_user(username, password)
         if user:
             login_user(user)
+            dao.update_last_login_date(user)
             return redirect('/')
+        else:
+            error = 'Tên đăng nhập hoặc mật khẩu không đúng!'
 
-    return render_template('login.html')
+    return render_template('login.html', error=error)
 
 
 @login.user_loader
@@ -38,7 +42,7 @@ def logout_user_process():
 
 @app.route('/register/', methods=['GET', 'POST'])
 def register():
-    return redirect('/')
+    return render_template('register.html')
 
 
 if __name__ == '__main__':

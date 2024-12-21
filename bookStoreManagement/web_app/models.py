@@ -65,7 +65,7 @@ class Order(db.Model):
     order_details = relationship('OrderDetail', backref='order')
     staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
     # nullable=True là để quan hệ many-to-one khi Staff xóa thì khóa ngoại sẽ SET NULL
-    customer_id = Column(Integer, ForeignKey('customer.id'), nullable=True)
+    customer_id = Column(Integer, ForeignKey('customer.id'), nullable=False)
 
 
 class OrderDetail(db.Model):
@@ -75,8 +75,12 @@ class OrderDetail(db.Model):
     quantity = Column(Integer, nullable=True)
 
 
-class UserInfo(db.Model, UserMixin):
-    __abstract__ = True
+class CustomerType(StatusAndType):
+    REGULAR = 1
+    LOYAL = 2
+
+
+class Customer(db.Model, UserMixin):
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(100), unique=True, nullable=False)
     password = Column(String(100), nullable=False)
@@ -89,6 +93,10 @@ class UserInfo(db.Model, UserMixin):
     last_login_date = Column(DateTime, default=func.now())
     avatar = Column(String(150),
                     default='https://res.cloudinary.com/dtufi97qw/image/upload/v1734447269/default_avatar_ovzdky.jpg')
+    type = Column(Enum(CustomerType), default=CustomerType.REGULAR)
+    orders = relationship(Order, backref='customer', lazy=True)
+    comments = relationship('Comment', backref='customer')
+    customer_owns_voucher = relationship('CustomerOwnsVoucher', backref='customer')
 
 
 class StaffRole(StatusAndType):
@@ -97,12 +105,13 @@ class StaffRole(StatusAndType):
     ADMIN = 3
 
 
-class Staff(UserInfo):
+class Staff(Customer):
+    id = Column(Integer, ForeignKey(Customer.id, ondelete='CASCADE'), primary_key=True)
     starting_date = Column(DateTime, nullable=True)
     ending_date = Column(DateTime, nullable=True)
-    role = Column(Enum(StaffRole), nullable=True)
+    role = Column(Enum(StaffRole), default=StaffRole.SALES_AGENT)
     active = Column(Boolean, default=True)
-    orders = relationship(Order, backref='sales_agent', lazy=True)
+    agent_orders = relationship(Order, backref='sales_agent', lazy=True)
 
 
 class Shift(db.Model):
@@ -116,18 +125,6 @@ class Shift(db.Model):
 shift_worker = db.Table('shift_worker',
                         Column('staff_id', Integer, ForeignKey(Staff.id), primary_key=True),
                         Column('shift_id', Integer, ForeignKey(Shift.id), primary_key=True))
-
-
-class CustomerType(StatusAndType):
-    REGULAR = 1
-    LOYAL = 2
-
-
-class Customer(UserInfo):
-    type = Column(Enum(CustomerType), default=CustomerType.REGULAR)
-    orders = relationship(Order, backref='customer', lazy=True)
-    comments = relationship('Comment', backref='customer')
-    customer_owns_voucher = relationship('CustomerOwnsVoucher', backref='customer')
 
 
 class Comment(db.Model):
@@ -174,6 +171,10 @@ class CustomerOwnsVoucher(db.Model):
 
 if __name__ == '__main__':
     with app.app_context():
-
-        # s = db.session.get(Staff, 1)
-        db.session.commit()
+        # db.create_all()
+        # staff = Staff(username='admin', password=str(hashlib.md5('123456'.encode('utf-8')).hexdigest()),
+        #           first_name='Hieu', last_name='Duong', phone_number='0999999', role=StaffRole.ADMIN)
+        # db.session.add(staff)
+        # db.session.commit()
+        ad = db.session.get(Staff, 7)
+        print(ad.agent_orders)
