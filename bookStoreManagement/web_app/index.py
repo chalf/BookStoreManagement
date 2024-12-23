@@ -4,6 +4,7 @@ from flask import render_template, redirect, request, jsonify, make_response
 import dao
 from flask_login import login_user, logout_user, current_user, login_required
 from models import CustomerType
+import utils
 
 
 @app.route('/')

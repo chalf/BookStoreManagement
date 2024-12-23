@@ -20,6 +20,7 @@ cloudinary.config(
     api_secret="LJ6gCnEZUfFk3zU6OfbNb0b6jrQ",
     secure=True
 )
+app.config['DEFAULT_PUBLIC_ID'] = 'default_avatar_ovzdky'
 
 # Flask Login object
 login = LoginManager(app=app)

@@ -3,6 +3,7 @@ import datetime
 from flask_login import current_user
 import cloudinary.uploader
 import cloudinary.api
+import utils
 
 
 #                        USER
@@ -43,6 +44,9 @@ def update_user(data):
 
 def update_user_avatar(file):
     upload_result = cloudinary.uploader.upload(file)
+    if not utils.is_default_avatar():
+        public_id = utils.get_public_id(current_user.avatar)
+        utils.delete_img(public_id)
     current_user.avatar = upload_result['secure_url']
     db.session.add(current_user)
     db.session.commit()
