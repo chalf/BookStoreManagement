@@ -1,5 +1,8 @@
 from models import *
 import datetime
+from flask_login import current_user
+import cloudinary.uploader
+import cloudinary.api
 
 
 #                        USER
@@ -27,5 +30,22 @@ def create_user(username, password, phone_number, first_name, last_name, email=N
     db.session.add(customer)
     db.session.commit()
     return get_user_by_id(customer.id)
+
+
+def update_user(data):
+    current_user.first_name = data.get('first_name')
+    current_user.last_name = data.get('last_name')
+    current_user.email = data.get('email')
+    current_user.phone_number = data.get('phone_number')
+    db.session.add(current_user)
+    db.session.commit()
+
+
+def update_user_avatar(file):
+    upload_result = cloudinary.uploader.upload(file)
+    current_user.avatar = upload_result['secure_url']
+    db.session.add(current_user)
+    db.session.commit()
+
 
 #                        PRODUCT

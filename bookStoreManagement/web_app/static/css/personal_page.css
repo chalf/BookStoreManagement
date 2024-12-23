@@ -1,0 +1,46 @@
+#logoutUser:link, #logoutUser:visited {
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+}
+
+#userAvatar {
+    position: relative;
+    transition: opacity 0.3s ease;
+}
+
+#userAvatar:hover {
+    opacity: 0.8;
+}
+
+#avatarOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 150px;
+    height: 150px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#avatarContainer {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+}
+
+#avatarContainer:hover #avatarOverlay {
+    opacity: 1;
+}
+
+#avatarUploadForm {
+    display: flex;
+}

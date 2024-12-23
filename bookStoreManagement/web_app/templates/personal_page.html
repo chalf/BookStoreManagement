@@ -1,0 +1,109 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}
+<title>{{ current_user.first_name }} {{ current_user.last_name }}</title>
+{% endblock %}
+
+{% block cssjs %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/personal_page.css') }}">
+<script>
+    function editProfile() {
+        const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card mx-auto" style="max-width: 600px;">
+        <div class="card-header text-center">
+            <h3>User Profile</h3>
+        </div>
+        <div class="card-body">
+            <div class="text-center mb-4" id="avatarContainer">
+                <label for="avatarInput">
+                    <img src="{{ current_user.avatar }}" id="userAvatar" class="rounded-circle" height="150" width="150"
+                         alt="User Avatar">
+                    <div id="avatarOverlay">Đổi Avatar</div>
+                    <input type="file" id="avatarInput" accept="image/*" onchange="changeUserAvatar()" style="display: none;"/>
+                </label>
+            </div>
+            <table class="table">
+                <tbody>
+                <tr>
+                    <th scope="row">Tên đầy đủ:</th>
+                    <td>{{ current_user.first_name }} {{ current_user.last_name }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Email:</th>
+                    <td>{{ current_user.email }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Số điện thoại:</th>
+                    <td>{{ current_user.phone_number }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Địa chỉ:</th>
+                    <td>{{ current_user.address }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Ngày tạo tài khoản:</th>
+                    <td>{{ current_user.created_date }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Loại tài khoản:</th>
+                    <td>{{ current_user.type | customer_type }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-center">
+            <button class="btn btn-primary" onclick="editProfile()">Chỉnh sửa</button>
+            <button class="btn btn-danger"><a id="logoutUser" href="/logout">Logout</a></button>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal for editing profile -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm" action="/api/user/edit" method="post">
+                    <div class="mb-3">
+                        <label for="editFullName" class="form-label">Họ</label>
+                        <input type="text" class="form-control" id="editFullName" name="last_name"
+                               value="{{ current_user.last_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="firstname" class="form-label">Tên</label>
+                        <input type="text" class="form-control" id="firstname" name="first_name"
+                               value="{{ current_user.first_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editEmail" name="email"
+                               value="{{ current_user.email }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPhone" class="form-label">Số điện thoại</label>
+                        <input type="text" class="form-control" id="editPhone" name="phone_number"
+                               value="{{ current_user.phone_number }}">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

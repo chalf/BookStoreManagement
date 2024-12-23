@@ -33,12 +33,12 @@
         </li>
         {% else %}
         <li>
-          <a class="navbar-brand" href="#">
-            <img src="{{ current_user.avatar }}" alt="Logo" style="width:40px;" class="rounded-pill">
+          <a class="navbar-brand" href="/user/details">
+            <img src="{{ current_user.avatar }}" alt="Logo" style="width:40px; height:40px;" class="rounded-pill">
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link d-flex justify-content-center align-items-center" href="#">{{ current_user.first_name }} {{ current_user.last_name }}</a>
+          <a class="nav-link d-flex justify-content-center align-items-center" href="/user/details">{{ current_user.first_name }} {{ current_user.last_name }}</a>
         </li>
         <li class="nav-item">
             <a href="/logout" class="nav-link text-danger">Đăng xuất</a>

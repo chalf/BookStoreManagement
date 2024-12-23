@@ -13,6 +13,8 @@
     {% endblock %}
 
     <link rel="icon" href="{{ url_for('static', filename='image/logo.webp') }}">
+    {% block cssjs %}
+    {% endblock %}
 </head>
 <body>
 {% block header %}
@@ -28,5 +30,6 @@
 {% include 'layout/footer.html' %}
 {% endblock %}
 
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

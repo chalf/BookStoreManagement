@@ -1,7 +1,9 @@
+import json
 from web_app import app, login
-from flask import render_template, redirect, request
+from flask import render_template, redirect, request, jsonify, make_response
 import dao
-from flask_login import login_user, logout_user, current_user
+from flask_login import login_user, logout_user, current_user, login_required
+from models import CustomerType
 
 
 @app.route('/')
@@ -51,6 +53,30 @@ def register():
         login_user(created_user)
         return redirect('/')
     return render_template('register.html')
+
+
+@app.template_filter('customer_type')
+def customer_type_filter(type):
+    return 'Khách hàng thông thường' if type == CustomerType.REGULAR else 'Khách hàng thân thiết'
+
+
+@app.route('/user/details/')
+@login_required
+def user_details():
+    return render_template('personal_page.html')
+
+
+@app.route('/api/user/edit/', methods=['POST'])
+@login_required
+def update_user():
+    # nếu là request đổi avatar
+    if request.files.get('avatar'):
+        dao.update_user_avatar(request.files.get('avatar'))
+        return make_response('', 200)
+    else: # nếu là request chỉnh sửa thông tin
+        data = request.form
+        dao.update_user(data)
+        return redirect('/user/details')
 
 
 if __name__ == '__main__':

@@ -98,6 +98,17 @@ class Customer(db.Model, UserMixin):
     comments = relationship('Comment', backref='customer')
     customer_owns_voucher = relationship('CustomerOwnsVoucher', backref='customer')
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'email': self.email,
+            'phone_number': self.phone_number,
+            'avatar': self.avatar
+        }
+
 
 class StaffRole(StatusAndType):
     SALES_AGENT = 1
