@@ -20,4 +20,5 @@ function changeUserAvatar(){
         if (status === true)
             window.location.reload()
     })
+    window.alert('Vui lòng đợi trong vài giây để cập nhật avatar');
 }

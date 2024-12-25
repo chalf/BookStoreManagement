@@ -1,0 +1,11 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+
+{% if current_user.is_authenticated %}
+<h1>Hello Admin</h1>
+{% endif %}
+
+{% endblock %}
+
+

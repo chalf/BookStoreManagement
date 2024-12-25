@@ -32,13 +32,21 @@
           <a class="nav-link bg-info text-dark d-flex justify-content-center align-items-center" style="width: 100px; height: 40px;" href="/register">Đăng ký</a>
         </li>
         {% else %}
+        <li class="nav-item bg-primary" style="margin-right: 10px;">
+          <a class="nav-link" href="/admin">Trang quản trị</a>
+        </li>
         <li>
           <a class="navbar-brand" href="/user/details">
             <img src="{{ current_user.avatar }}" alt="Logo" style="width:40px; height:40px;" class="rounded-pill">
           </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link d-flex justify-content-center align-items-center" href="/user/details">{{ current_user.first_name }} {{ current_user.last_name }}</a>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">{{ current_user.first_name }} {{ current_user.last_name }}</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/user/details">Xem thông tin cá nhân</a></li>
+            <li><a class="dropdown-item" href="#">Đổi mật khẩu</a></li>
+            <li><a class="dropdown-item" href="#">Đơn hàng</a></li>
+          </ul>
         </li>
         <li class="nav-item">
             <a href="/logout" class="nav-link text-danger">Đăng xuất</a>

@@ -8,7 +8,10 @@ import utils
 
 #                        USER
 def get_user_by_id(id):
-    return Customer.query.get(id)
+    # one_or_none() tức là nếu có đúng 1 record thì trả về, nếu nhiều hơn thì lỗi
+    # nếu không có record nào thì None, nếu None thì truy vấn Customer
+    return db.session.query(Staff).filter(Staff.id == id).one_or_none() or \
+           Customer.query.get(id)
 
 
 def auth_user(username, password, role=None):
@@ -50,6 +53,9 @@ def update_user_avatar(file):
     current_user.avatar = upload_result['secure_url']
     db.session.add(current_user)
     db.session.commit()
+
+
+
 
 
 #                        PRODUCT

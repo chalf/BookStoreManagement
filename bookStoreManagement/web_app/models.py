@@ -1,5 +1,5 @@
 from web_app import app, db
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum, Time, Float
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum, Time, Float, Text
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 from enum import Enum as StatusAndType
@@ -15,16 +15,18 @@ class Category(db.Model):
 class Book(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(255), nullable=False, unique=True)
-    description = Column(String(255), nullable=True)
+    description = Column(Text, nullable=True)
     original_price = Column(Integer, default=0)
     quantity = Column(Integer, default=1)
-    active = Column(Boolean, default=True)  # True: còn hàng
-    average_star = Column(Float, default=0)
+    active = Column(Boolean, default=True)  # True: còn hàng, còn kinh doanh
+    average_star = Column(Float, default=None, nullable=True)
     images = relationship('Image', backref='book', lazy='joined')
     categories = relationship(Category, secondary='cate_prod', lazy='joined',
                               backref=backref('books', lazy=True))
     order_details = relationship('OrderDetail', backref='book')
     comments = relationship('Comment', backref='book')
+    exist_authors = relationship('Author', secondary='author_book',
+                                 overlaps="authors")
 
 
 class Image(db.Model):
@@ -42,7 +44,7 @@ class Author(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False, unique=True)
     books = relationship(Book, secondary='author_book', lazy='subquery',
-                         backref=backref('authors', lazy='joined'))
+                         backref=backref('authors', lazy='joined'), overlaps="exist_authors")
 
 
 author_book = db.Table('author_book',
@@ -122,6 +124,7 @@ class Staff(Customer):
     ending_date = Column(DateTime, nullable=True)
     role = Column(Enum(StaffRole), default=StaffRole.SALES_AGENT)
     active = Column(Boolean, default=True)
+    is_warehouse_staff = Column(Boolean, nullable=False, default=False)
     agent_orders = relationship(Order, backref='sales_agent', lazy=True)
 
 
@@ -187,5 +190,6 @@ if __name__ == '__main__':
         #           first_name='Hieu', last_name='Duong', phone_number='0999999', role=StaffRole.ADMIN)
         # db.session.add(staff)
         # db.session.commit()
-        ad = db.session.get(Staff, 7)
-        print(ad.agent_orders)
+        # ad = db.session.get(Staff, 1)
+        b = Book(title='test', active=False)
+        print(b.active)

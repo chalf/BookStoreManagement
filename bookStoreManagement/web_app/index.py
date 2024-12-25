@@ -25,7 +25,8 @@ def login_process():
         if user:
             login_user(user)
             dao.update_last_login_date(user)
-            return redirect('/')
+            next_url = request.args.get('next')
+            return redirect(next_url) if next_url else redirect('/')
         else:
             error = 'Tên đăng nhập hoặc mật khẩu không đúng!'
 
@@ -39,8 +40,9 @@ def load_user(user_id):
 
 @app.route('/logout/')
 def logout_user_process():
+    next_url = request.args.get('next')
     logout_user()
-    return redirect('/login')
+    return redirect(next_url) if next_url else redirect('/login')
 
 
 @app.route('/register/', methods=['GET', 'POST'])
