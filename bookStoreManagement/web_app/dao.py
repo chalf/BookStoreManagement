@@ -56,6 +56,4 @@ def update_user_avatar(file):
 
 
 
-
-
 #                        PRODUCT

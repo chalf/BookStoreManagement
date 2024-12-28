@@ -23,8 +23,8 @@
                 <label class="form-label" for="typePasswordX-2">Password</label>
                 <input name="password" type="password" id="typePasswordX-2" class="form-control form-control-lg" />
               </div>
-              {% if error %}
-              <p class="alert-danger">{{ error }}</p>
+              {% if get_flashed_messages() %}
+              <p class="alert-danger">{{ get_flashed_messages()[0] }}</p>
               {% endif %}
             <!-- Checkbox -->
 <!--            <div class="form-check d-flex justify-content-start mb-4">-->

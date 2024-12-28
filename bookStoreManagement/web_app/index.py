@@ -1,6 +1,6 @@
 import json
 from web_app import app, login
-from flask import render_template, redirect, request, jsonify, make_response
+from flask import render_template, redirect, request, jsonify, make_response, flash, get_flashed_messages
 import dao
 from flask_login import login_user, logout_user, current_user, login_required
 from models import CustomerType
@@ -17,7 +17,6 @@ def login_process():
     # nếu đăng nhập rồi thì không hiện form đăng nhập nữa
     if current_user.is_authenticated:
         return redirect('/')
-    error = None
     if request.method.__eq__('POST'):
         username = request.form.get('username')
         password = request.form.get('password')
@@ -28,9 +27,9 @@ def login_process():
             next_url = request.args.get('next')
             return redirect(next_url) if next_url else redirect('/')
         else:
-            error = 'Tên đăng nhập hoặc mật khẩu không đúng!'
+            flash('Tên đăng nhập hoặc mật khẩu không đúng!', 'error')
 
-    return render_template('login.html', error=error)
+    return render_template('login.html')
 
 
 @login.user_loader

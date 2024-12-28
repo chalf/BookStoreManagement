@@ -17,16 +17,17 @@ class Book(db.Model):
     title = Column(String(255), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     original_price = Column(Integer, default=0)
-    quantity = Column(Integer, default=1)
+    quantity = Column(Integer, default=0)
     active = Column(Boolean, default=True)  # True: còn hàng, còn kinh doanh
     average_star = Column(Float, default=None, nullable=True)
+    isbn = Column(String(20), nullable=False, unique=True)
     images = relationship('Image', backref='book', lazy='joined')
     categories = relationship(Category, secondary='cate_prod', lazy='joined',
                               backref=backref('books', lazy=True))
     order_details = relationship('OrderDetail', backref='book')
     comments = relationship('Comment', backref='book')
-    exist_authors = relationship('Author', secondary='author_book',
-                                 overlaps="authors")
+    # Quan hệ thứ hai (tương tự, nhưng với mục đích cho BookView - flask_admin), quan hệ thứ nhất là backref từ Author
+    writers = relationship('Author', secondary='author_book', overlaps='authors')
 
 
 class Image(db.Model):
@@ -44,7 +45,10 @@ class Author(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False, unique=True)
     books = relationship(Book, secondary='author_book', lazy='subquery',
-                         backref=backref('authors', lazy='joined'), overlaps="exist_authors")
+                         backref=backref('authors', lazy='joined'), overlaps='writers')
+
+    def __str__(self):
+        return self.name
 
 
 author_book = db.Table('author_book',
@@ -110,6 +114,13 @@ class Customer(db.Model, UserMixin):
             'phone_number': self.phone_number,
             'avatar': self.avatar
         }
+
+    def is_staff(self):
+        # nếu customer có thuộc tính của staff thì chắc chắn user này là staff
+        return hasattr(self, 'is_warehouse_staff')
+
+    def is_admin(self):
+        return self.role == StaffRole.ADMIN if self.is_staff() else False
 
 
 class StaffRole(StatusAndType):
@@ -190,6 +201,5 @@ if __name__ == '__main__':
         #           first_name='Hieu', last_name='Duong', phone_number='0999999', role=StaffRole.ADMIN)
         # db.session.add(staff)
         # db.session.commit()
-        # ad = db.session.get(Staff, 1)
-        b = Book(title='test', active=False)
-        print(b.active)
+        ad = db.session.get(Customer, 1)
+        print(ad.is_staff())
