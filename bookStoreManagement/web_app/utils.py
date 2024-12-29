@@ -1,7 +1,6 @@
 import cloudinary.uploader
 from flask_login import current_user
 from werkzeug.datastructures import FileStorage
-
 from web_app import app
 from flask_admin.contrib.sqla import typefmt
 from sqlalchemy import DateTime

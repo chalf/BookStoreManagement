@@ -7,6 +7,8 @@ import cloudinary
 app = Flask('Trang bán sách trực tuyến')
 app.secret_key = b'\x01\xfe\xc6h\xf8\xfc\xef6\xfe\xb8\xa0n\xc8\xcdI\xdb'
 
+app.config['DEFAULT_PUBLIC_ID'] = 'default_avatar_ovzdky'
+
 # Cấu hình Database
 app.config["SQLALCHEMY_DATABASE_URI"] = \
     "mysql+pymysql://root:%s@localhost/bookstore?charset=utf8mb4" % quote('Admin@123')
@@ -20,7 +22,6 @@ cloudinary.config(
     api_secret="LJ6gCnEZUfFk3zU6OfbNb0b6jrQ",
     secure=True
 )
-app.config['DEFAULT_PUBLIC_ID'] = 'default_avatar_ovzdky'
 
 # Flask Login object
 login = LoginManager(app=app)

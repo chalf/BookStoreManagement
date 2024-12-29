@@ -1,7 +1,8 @@
 from flask_admin import Admin, AdminIndexView, expose, BaseView
 from flask_admin.contrib.sqla import ModelView
+from markupsafe import Markup
 from models import *
-from wtforms import PasswordField, FileField, IntegerField
+from wtforms import PasswordField, IntegerField, Field, MultipleFileField
 from flask_login import current_user
 from flask import redirect, flash
 from sqlalchemy.orm import configure_mappers
@@ -61,7 +62,7 @@ class CustomerView(AdminPermissionModelView):
     form_overrides = {
         'password': PasswordField  # khi cập nhật sẽ không hiện mật khẩu, bắt nhập mk mới
     }
-    column_exclude_list = ('password', 'address', 'avatar', 'created_date')
+    column_exclude_list = ('password', 'address', 'avatar')
     can_view_details = True
     can_edit = False
 
@@ -78,8 +79,16 @@ class StaffView(CustomerView):
     column_exclude_list = ('password', 'address', 'avatar', 'created_date', 'type')
 
 
+class HTMLField(Field):
+    def _value(self):
+        return Markup(self.data) if self.data else ''
+
+    def __call__(self, **kwargs):
+        return Markup(self.data) if self.data else ''
+
+
 class BookView(ManagerPermissionView):
-    can_delete = False
+    can_delete = True
     column_list = ['isbn', 'title', 'original_price', 'quantity', 'active', 'average_star', 'authors']
     column_filters = ['title', 'original_price', 'average_star', 'authors.name']
     column_labels = {
@@ -93,12 +102,9 @@ class BookView(ManagerPermissionView):
         'writers': 'Thêm tác giả'
     }
     column_editable_list = ['title', 'original_price', 'active']
-    inline_models = [(Image, dict(form_overrides={'image': FileField},
-                                  )),
-                     Author,
-                     ]
+    inline_models = [Author, ]
     form_columns = ['isbn', 'title', 'description', 'original_price', 'quantity', 'imported_quantity',
-                    'active', 'categories', 'images', 'authors', 'writers']
+                    'active', 'categories', 'images_preview', 'images', 'upload_images', 'authors', 'writers']
     form_widget_args = {
         'quantity': {
             'readonly': True
@@ -106,17 +112,33 @@ class BookView(ManagerPermissionView):
     }
     form_extra_fields = {
         'imported_quantity': IntegerField(label='Số lượng nhập hàng', validators=[
-            NumberRange(min=0, max=utils.read_config_json().get('MAX_QUANTITY'))], default=0)
+            NumberRange(min=0, max=utils.read_config_json().get('MAX_QUANTITY'))], default=0),
+        'upload_images': MultipleFileField('Upload ảnh'),
+        'images_preview': HTMLField('Hình ảnh')
     }
-    form_args = {
-        'authors': {
-            'get_label': 'name'  # Sử dụng thuộc tính name làm nhãn
-        },
-    }
+
+    def _images_preview(view, context, model, name):
+        """ Trả về danh sách hình ảnh dưới dạng HTML để hiển thị trong form. """
+        if not model.images:
+            return Markup('<p>No images available.</p>')
+
+        html = ""
+        for image in model.images:
+            html += f'<img src="{image.image}" alt="Book Image" style="max-width: 150px; margin: 5px;"/>'
+        return Markup(html)
+
+    def on_form_prefill(self, form, id):
+        model = self.get_one(id)  # lấy model bởi id của model mà form đang chỉnh sửa
+        if model and model.images:
+            html = ""
+            for image in model.images:
+                html += f'<img src="{image.image}" alt="Book Image" style="max-width: 150px; margin: 5px;"/>'
+            form.images_preview.data = html
+
     column_searchable_list = ['title', 'authors.name']
 
     def search_placeholder(self):
-        return "Tìm kiếm theo tên hoặc tác giả..."
+        return 'Tìm kiếm theo tên hoặc tác giả...'
 
     _regulations = utils.read_config_json()
 
@@ -141,12 +163,12 @@ class BookView(ManagerPermissionView):
     def on_model_change(self, form, model, is_created):
         model.quantity += form.imported_quantity.data
         # upload images
-        if form.images.data and model.images:
-            book_images = form.images.data
-            for book_image, image_property in zip(book_images, model.images):
-                # book_image của book_images; image_property của model.images; zip() giúp loop trên 2 iterable cùng lúc
-                url = cloudinary.uploader.upload(book_image.get('image')).get('secure_url')
-                image_property.image = url
+        if form.upload_images.data[0].filename:
+            # Khi không upload ảnh nào thì form.upload_images.data vẫn có 1 FileStorage, chỉ là filename không có
+            upload_book_images = form.upload_images.data
+            for img in upload_book_images:
+                url = cloudinary.uploader.upload(img).get('secure_url')
+                model.images.append(Image(image=url, book=model))
 
 
 admin.add_view(CustomerView(Customer, db.session))

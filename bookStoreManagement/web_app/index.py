@@ -3,13 +3,13 @@ from web_app import app, login
 from flask import render_template, redirect, request, jsonify, make_response, flash, get_flashed_messages
 import dao
 from flask_login import login_user, logout_user, current_user, login_required
-from models import CustomerType
+from models import CustomerType, Book
 import utils
 
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', book=Book.query.get(3))
 
 
 @app.route('/login/', methods=['GET', 'POST'])

@@ -2,5 +2,9 @@
 
 {% block content %}
 <h1>HELLO TO MY WEB</h1>
+{% for image in book.images %}
+<h4>{{ image.image }}</h4>
+<img src="{{ image.image }}" alt="Book Image" style="max-width: 150px; margin: 5px;"/>
+{% endfor %}
 
 {% endblock %}

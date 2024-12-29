@@ -1,9 +1,10 @@
 from web_app import app, db
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum, Time, Float, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Enum, Time, Float, Text, event
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 from enum import Enum as StatusAndType
 from flask_login import UserMixin
+import utils
 import hashlib
 
 
@@ -21,7 +22,7 @@ class Book(db.Model):
     active = Column(Boolean, default=True)  # True: còn hàng, còn kinh doanh
     average_star = Column(Float, default=None, nullable=True)
     isbn = Column(String(20), nullable=False, unique=True)
-    images = relationship('Image', backref='book', lazy='joined')
+    images = relationship('Image', backref='book', lazy='joined', cascade='all, delete-orphan')
     categories = relationship(Category, secondary='cate_prod', lazy='joined',
                               backref=backref('books', lazy=True))
     order_details = relationship('OrderDetail', backref='book')
@@ -29,11 +30,20 @@ class Book(db.Model):
     # Quan hệ thứ hai (tương tự, nhưng với mục đích cho BookView - flask_admin), quan hệ thứ nhất là backref từ Author
     writers = relationship('Author', secondary='author_book', overlaps='authors')
 
+    def __str__(self):
+        return self.isbn
+
 
 class Image(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
-    image = Column(String(100), nullable=False)
+    image = Column(String(100), nullable=True)
     book_id = Column(Integer, ForeignKey(Book.id), nullable=False)
+
+
+# Lắng nghe sự kiện đối tượng Image bị xóa
+@event.listens_for(Image, 'before_delete')
+def before_image_delete(mapper, connection, target):
+    utils.delete_img(utils.get_public_id(target.image))
 
 
 category_product = db.Table('cate_prod',
