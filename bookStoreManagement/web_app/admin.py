@@ -33,7 +33,7 @@ admin = Admin(app=app, name='Trang quản trị cửa hàng sách', template_mod
 
 
 class AdminPermissionModelView(ModelView):
-    column_type_formatters = utils.MY_DEFAULT_FORMATTERS
+    column_type_formatters = utils.get_formatter()
     can_view_details = True
 
     def is_accessible(self):
@@ -110,22 +110,15 @@ class BookView(ManagerPermissionView):
             'readonly': True
         }
     }
+    column_formatters = {
+        'original_price': lambda view, context, model, name: f"{getattr(model, name):,} VNĐ",
+    }
     form_extra_fields = {
         'imported_quantity': IntegerField(label='Số lượng nhập hàng', validators=[
             NumberRange(min=0, max=utils.read_config_json().get('MAX_QUANTITY'))], default=0),
         'upload_images': MultipleFileField('Upload ảnh'),
         'images_preview': HTMLField('Hình ảnh')
     }
-
-    def _images_preview(view, context, model, name):
-        """ Trả về danh sách hình ảnh dưới dạng HTML để hiển thị trong form. """
-        if not model.images:
-            return Markup('<p>No images available.</p>')
-
-        html = ""
-        for image in model.images:
-            html += f'<img src="{image.image}" alt="Book Image" style="max-width: 150px; margin: 5px;"/>'
-        return Markup(html)
 
     def on_form_prefill(self, form, id):
         model = self.get_one(id)  # lấy model bởi id của model mà form đang chỉnh sửa
@@ -176,3 +169,4 @@ admin.add_view(StaffView(Staff, db.session))
 admin.add_view(ModelView(Author, db.session))
 configure_mappers()
 admin.add_view(BookView(Book, db.session))
+admin.add_view(ModelView(Category, db.session))

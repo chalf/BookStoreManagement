@@ -12,6 +12,9 @@ class Category(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False, unique=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Book(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -31,7 +34,7 @@ class Book(db.Model):
     writers = relationship('Author', secondary='author_book', overlaps='authors')
 
     def __str__(self):
-        return self.isbn
+        return f'{self.isbn} {self.title}'
 
 
 class Image(db.Model):

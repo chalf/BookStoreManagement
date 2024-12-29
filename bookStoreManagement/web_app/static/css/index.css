@@ -1,0 +1,30 @@
+#slide{
+    width: 100%;
+    height: 400px;
+    position: relative;
+    margin-top: 40px;
+}
+
+#slide img{
+    width: 100%;
+    height: 100%;
+}
+
+#slide > div.huong i:first-child{
+    position: absolute;
+    top: 48%;
+    left: 50px;
+    font-size: 50px;
+    color: white;
+    cursor: pointer;
+}
+
+#slide > div.huong i:last-child{
+    position: absolute;
+    top: 50%;
+    right: 50px;
+    font-size: 50px;
+    color: white;
+    cursor: pointer;
+
+}

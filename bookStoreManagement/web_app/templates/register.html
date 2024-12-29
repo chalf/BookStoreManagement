@@ -10,6 +10,9 @@
                        required>
                 <label for="username">Tên đăng nhập</label>
             </div>
+            {% if get_flashed_messages() %}
+              <p class="alert alert-warning">{{ get_flashed_messages()[0] }}</p>
+            {% endif %}
             <div class="form-floating mt-3 mb-3">
                 <input type="password" class="form-control" id="pwd" placeholder="Enter password" name="password" required>
                 <label for="pwd">Mật khẩu</label>

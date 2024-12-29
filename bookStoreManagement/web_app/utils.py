@@ -3,9 +3,9 @@ from flask_login import current_user
 from werkzeug.datastructures import FileStorage
 from web_app import app
 from flask_admin.contrib.sqla import typefmt
-from sqlalchemy import DateTime
 import json
 import os
+from datetime import datetime
 
 
 # Lấy public_id từ url ảnh trên cloudinary
@@ -30,16 +30,17 @@ def bool_format(view, value):
     return '✔' if value else '✘'
 
 
-# Sao chép formatter mặc định
-MY_DEFAULT_FORMATTERS = dict(typefmt.DEFAULT_FORMATTERS)
+def get_formatter():
+    # Sao chép formatter mặc định
+    MY_DEFAULT_FORMATTERS = dict(typefmt.DEFAULT_FORMATTERS)
 
-# Cập nhật formatter cho kiểu bool và các formatter khác
-MY_DEFAULT_FORMATTERS.update({
-    bool: bool_format,  # Định dạng bool thành V hoặc X
-    # định dạng ngày tháng theo dd-mm-yyyy hour-minute-second
-    DateTime: lambda view, context, value: value.strftime('%d-%m-%Y %H:%M:%S'),
-
-})
+    # Cập nhật formatter cho kiểu bool và các formatter khác
+    MY_DEFAULT_FORMATTERS.update({
+        bool: bool_format,  # Định dạng bool thành V hoặc X
+        # định dạng ngày tháng theo dd-mm-yyyy hour-minute-second
+        datetime: lambda view, value: value.strftime('%d-%m-%Y %H:%M:%S'),
+    })
+    return MY_DEFAULT_FORMATTERS
 
 
 def read_config_json():
@@ -70,6 +71,4 @@ if __name__ == '__main__':
     # write_config_json(150, 300)
     # print(read_config_json())
     a = FileStorage
-    for key, formatter in MY_DEFAULT_FORMATTERS.items():
-        print(f"Key: {key}, Formatter: {formatter}")
 

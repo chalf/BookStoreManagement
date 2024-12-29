@@ -1,10 +1,67 @@
 {% extends 'layout/base.html' %}
 
-{% block content %}
-<h1>HELLO TO MY WEB</h1>
-{% for image in book.images %}
-<h4>{{ image.image }}</h4>
-<img src="{{ image.image }}" alt="Book Image" style="max-width: 150px; margin: 5px;"/>
-{% endfor %}
+{% block cssjs %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
 
+{% block content %}
+<div id="slide">
+    <img id="show" src="{{ pictures[0] }}"/>
+    <div class="huong">
+        <i class="fa fa-chevron-circle-left" onclick="pre()"></i>
+        <i class="fa fa-chevron-circle-right" onclick="next()"></i>
+    </div>
+</div>
+
+<div class="row mt-3">
+    {% for book in books %}
+    <div class="col-md-3 col-2 mb-2">
+        <div class="card">
+            <img class="card-img-top" src="{{ book.images[0].image if book.images[0] else None }}"
+                 alt="{{ book.title }}">
+            <div class="card-body">
+                <h4 class="card-title">{{ book.title }}</h4>
+                <p class="card-text">Some example text.</p>
+                <a href="#" class="btn btn-primary">Xem chi tiết</a>
+                <button class="btn btn-danger mt-1">Thêm vào giỏ hàng</button>
+            </div>
+        </div>
+    </div>
+
+    {% endfor %}
+</div>
+
+{% if num_of_books > 1 %}
+<div style="text-align: center;">
+    <ul class="pagination" style="display: inline-flex; padding: 0; margin: 0;">
+        {% for page_number in range(1, num_of_books + 1) %}
+        <li class="page-item"><a class="page-link" href="/?page={{ page_number }}">{{ page_number }}</a></li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+
+<script>
+    var pictures = {{ pictures | tojson }};
+    var index = 0;
+
+    function next() {
+        index++;
+        if (index >= pictures.length) index = 0;
+        var pic = document.getElementById("show");
+        pic.src = pictures[index];
+    }
+
+    function pre() {
+        index--;
+        if (index < 0) index = pictures.length - 1;
+        var pic = document.getElementById("show");
+        pic.src = pictures[index];
+    }
+
+    setInterval(next, 4000);
+</script>
+
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}

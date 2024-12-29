@@ -15,14 +15,18 @@
                     <a class="nav-link" href="#">Link</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Dropdown</a>
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Thể loại sách</a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">Link</a></li>
-                        <li><a class="dropdown-item" href="#">Another link</a></li>
-                        <li><a class="dropdown-item" href="#">A third link</a></li>
+                        {% for cate in categories %}
+                        <li><a class="dropdown-item" href="/?category_id={{ cate.id }}">{{ cate.name }}</a></li>
+                        {% endfor %}
                     </ul>
                 </li>
             </ul>
+            <form class="d-flex">
+                <input class="form-control me-2" type="text" name="keyword" placeholder="Tìm kiếm sách">
+                <button class="btn btn-primary" type="button">Search</button>
+            </form>
             <ul class="navbar-nav ms-auto">
                 {% if current_user.is_anonymous %}
                 <li class="nav-item">

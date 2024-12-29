@@ -1,15 +1,31 @@
 import json
+import math
+
 from web_app import app, login
-from flask import render_template, redirect, request, jsonify, make_response, flash, get_flashed_messages
+from flask import render_template, redirect, request, jsonify, make_response, flash, get_flashed_messages, url_for
 import dao
 from flask_login import login_user, logout_user, current_user, login_required
-from models import CustomerType, Book
-import utils
+from models import CustomerType
+
+
+@app.context_processor
+def common_response():
+    return {
+        'categories': dao.get_categories(),
+        # 'cart_stats': utils.stats_cart(session.get('cart'))
+    }
 
 
 @app.route('/')
 def index():
-    return render_template('index.html', book=Book.query.get(3))
+    pictures = [url_for('static', filename=f'image/index/{i}.png') for i in range(1, 6)]
+
+    books = dao.get_books(kw=request.args.get('keyword'), page_number=int(request.args.get('page', 1)),
+                          cate_id=request.args.get('category_id'))
+    page_size = app.config['PAGE_SIZE']
+    num_of_books = dao.count_books()
+    return render_template('index.html', pictures=pictures, books=books,
+                           num_of_books=math.ceil(num_of_books/page_size))
 
 
 @app.route('/login/', methods=['GET', 'POST'])
@@ -52,8 +68,11 @@ def register():
     if request.method.__eq__('POST'):
         userinfo = request.form
         created_user = dao.create_user(**userinfo)
-        login_user(created_user)
-        return redirect('/')
+        if not created_user:
+            flash('Tên đăng nhập này đã được sử dụng', 'warning')
+        else:
+            login_user(created_user)
+            return redirect('/')
     return render_template('register.html')
 
 

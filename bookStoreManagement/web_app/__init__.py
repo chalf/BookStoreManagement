@@ -8,6 +8,7 @@ app = Flask('Trang bán sách trực tuyến')
 app.secret_key = b'\x01\xfe\xc6h\xf8\xfc\xef6\xfe\xb8\xa0n\xc8\xcdI\xdb'
 
 app.config['DEFAULT_PUBLIC_ID'] = 'default_avatar_ovzdky'
+app.config['PAGE_SIZE'] = 3
 
 # Cấu hình Database
 app.config["SQLALCHEMY_DATABASE_URI"] = \
