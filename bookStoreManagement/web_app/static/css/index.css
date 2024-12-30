@@ -28,3 +28,10 @@
     cursor: pointer;
 
 }
+
+#price{
+    line-height: 1.2rem;
+    font-size: 1.2rem !important;
+    color: #C92127;
+    font-weight: 600;
+}

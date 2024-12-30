@@ -37,6 +37,14 @@ class Book(db.Model):
         return f'{self.isbn} {self.title}'
 
 
+# Event listener để tự động cập nhật active khi quantity = 0
+@event.listens_for(Book, 'before_insert')
+@event.listens_for(Book, 'before_update')
+def update_active_based_on_quantity(mapper, connection, target):
+    if target.quantity == 0:
+        target.active = False
+
+
 class Image(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     image = Column(String(100), nullable=True)
@@ -214,5 +222,8 @@ if __name__ == '__main__':
         #           first_name='Hieu', last_name='Duong', phone_number='0999999', role=StaffRole.ADMIN)
         # db.session.add(staff)
         # db.session.commit()
-        ad = db.session.get(Customer, 1)
-        print(ad.is_staff())
+        ad = db.session.get(Book, 3)
+        ad.quantity = 0
+        db.session.add(ad)
+        db.session.commit()
+        print(ad.quantity)

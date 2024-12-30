@@ -22,3 +22,18 @@ function changeUserAvatar(){
     })
     window.alert('Vui lòng đợi trong vài giây để cập nhật avatar');
 }
+
+function addToCart(id, name, price, image){
+    console.log(image);
+    fetch('/api/carts/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            id: id,
+            title: name,
+            price: price,
+            image: image
+        })
+    })
+}
+

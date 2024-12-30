@@ -66,7 +66,7 @@ def update_user_avatar(file):
 
 #     -------------------    PRODUCT    -----------------------
 def get_books(cate_id=None, kw=None, page_number=1):
-    books = Book.query
+    books = Book.query.filter_by(active=True)
     if cate_id:
         books = (books.join(category_product, Book.id == category_product.c.book_id)
                  .filter(category_product.c.category_id == cate_id))

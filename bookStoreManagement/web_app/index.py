@@ -1,8 +1,8 @@
 import json
 import math
-
+import utils
 from web_app import app, login
-from flask import render_template, redirect, request, jsonify, make_response, flash, get_flashed_messages, url_for
+from flask import render_template, redirect, request, jsonify, make_response, flash, url_for, session
 import dao
 from flask_login import login_user, logout_user, current_user, login_required
 from models import CustomerType
@@ -40,6 +40,7 @@ def login_process():
         if user:
             login_user(user)
             dao.update_last_login_date(user)
+            utils.merge_cart()
             next_url = request.args.get('next')
             return redirect(next_url) if next_url else redirect('/')
         else:
@@ -98,6 +99,58 @@ def update_user():
         data = request.form
         dao.update_user(data)
         return redirect('/user/details')
+
+
+@app.route('/cart/')
+def get_cart():
+    cart_key = f'cart_{current_user.id}' if current_user.is_authenticated else 'guest_cart'
+    cart = utils.stats_cart(session.get(cart_key))
+    return render_template('cart.html', cart_stats=cart, cart_key=cart_key)
+
+
+@app.route('/api/carts/', methods=['POST'])
+def add_to_cart():
+    """
+    session['cart']: {
+        "1": {
+            "id": "1",
+            "title": "abc",
+            "price": 123,
+            "image": image1.png
+            "purchase_quantity": 1
+        }, "2": {
+            "id": "2",
+            "title": "abc",
+            "price": 123,
+            "image": image2.png,
+            "purchase_quantity": 1
+        }
+    }
+    """
+    cart_key = f'cart_{current_user.id}' if current_user.is_authenticated else 'guest_cart'
+    cart = session.get(cart_key, {})
+
+    id = str(request.json.get('id'))
+    title = request.json.get('title')
+    price = request.json.get('price')
+    image = request.json.get('image')
+
+    if id in cart:
+        cart[id]['purchase_quantity'] += 1
+    else:
+        cart[id] = {
+            'id': id,
+            'title': title,
+            'price': price,
+            'image': image,
+            'purchase_quantity': 1
+        }
+
+    session[cart_key] = cart
+    return jsonify(utils.stats_cart(cart))
+
+
+
 
 
 if __name__ == '__main__':

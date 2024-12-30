@@ -1,0 +1,67 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<!-- Shopping Cart -->
+<div class="container my-5">
+    <h2 class="text-center mb-4">Giỏ hàng mua sắm của bạn</h2>
+    {% if cart_key not in session %}
+    <div class="alert alert-info mt-1">KHÔNG có sản phẩm nào trong giỏ!</div>
+    {% else %}
+    <div class="row">
+        <!-- Cart Items -->
+        <div class="col-lg-8">
+            {% for prod in session[cart_key].values() %}
+            <div class="card mb-3">
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        <img src="{{ prod.image }}" class="img-fluid rounded-start" alt="{{ prod.title }}">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ prod.title }}</h5>
+                            <p class="card-text">Giá: {{ "{:,.0f}".format(prod.price) }} đ</p>
+                            <div class="input-group">
+                                <button class="btn btn-outline-secondary btn-sm" type="button">-</button>
+                                <input type="text" class="form-control text-center" value="{{ prod.purchase_quantity }}" style="width: 50px;">
+                                <button class="btn btn-outline-secondary btn-sm" type="button">+</button>
+                            </div>
+                            <p class="card-text mt-2">
+                                <button class="btn btn-danger btn-sm">Xóa</button>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Cart Summary -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Cart Summary</h5>
+                    <hr>
+                    <p class="card-text d-flex justify-content-between">
+                        <span>Tổng sản phẩm:</span>
+                        <span>{{ cart_stats.total_quantity }}</span>
+                    </p>
+                    <p class="card-text d-flex justify-content-between">
+                        <span>Thành tiền:</span>
+                        <span>{{ "{:,.0f}".format(cart_stats.total_amount) }} đ</span>
+                    </p>
+                    <p class="card-text d-flex justify-content-between">
+                        <span>Giảm giá:</span>
+                        <span>0 đ</span>
+                    </p>
+                    <hr>
+                    <p class="card-text d-flex justify-content-between fw-bold">
+                        <span>Tổng tiền:</span>
+                        <span>{{ "{:,.0f}".format(cart_stats.total_amount) }} đ</span>
+                    </p>
+                    <button class="btn btn-primary w-100">Thanh toán</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

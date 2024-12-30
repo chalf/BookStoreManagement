@@ -6,6 +6,7 @@ from flask_admin.contrib.sqla import typefmt
 import json
 import os
 from datetime import datetime
+from flask import session
 
 
 # Lấy public_id từ url ảnh trên cloudinary
@@ -66,9 +67,43 @@ def write_config_json(limit_edit_quantity, max_quantity):
         f.write(json.dumps(config_data, indent=4))
 
 
+def stats_cart(cart):
+    # tổng số lượng và tổng tiền
+    total_quantity, total_amount = 0, 0
+
+    if cart:
+        for c in cart.values():
+            total_quantity += c['purchase_quantity']
+            total_amount += c['purchase_quantity'] * c['price']
+
+    return {
+        'total_amount': total_amount,
+        'total_quantity': total_quantity
+    }
+
+
+def merge_cart():
+    try:
+        guest_cart = session.pop('guest_cart')
+    except KeyError:
+        guest_cart = {}
+    user_cart_key = f'cart_{current_user.id}'
+    user_cart = session.get(user_cart_key, {})
+
+    # Hợp nhất
+    if guest_cart:
+        for id, item in guest_cart.items():
+            if id in user_cart:
+                user_cart[id]['purchase_quantity'] += item['purchase_quantity']
+            else:
+                user_cart[id] = item
+
+    session[user_cart_key] = user_cart
+
+
 if __name__ == '__main__':
-    # print(read_config_json())
-    # write_config_json(150, 300)
-    # print(read_config_json())
-    a = FileStorage
+    dic = {
+        '1': 11,
+        True: ('p',)
+    }
 

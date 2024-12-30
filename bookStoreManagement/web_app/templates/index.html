@@ -21,9 +21,12 @@
                  alt="{{ book.title }}">
             <div class="card-body">
                 <h4 class="card-title">{{ book.title }}</h4>
-                <p class="card-text">Some example text.</p>
+                <p class="card-text" id="price">{{ "{:,.0f}".format(book.original_price) }} đ</p>
                 <a href="#" class="btn btn-primary">Xem chi tiết</a>
-                <button class="btn btn-danger mt-1">Thêm vào giỏ hàng</button>
+                <button class="btn btn-danger mt-1" data-bs-toggle="modal" data-bs-target="#myModal"
+                        onclick="addToCart({{ book.id }}, '{{ book.title }}', {{ book.original_price }}, '{{ book.images[0].image if book.images[0] else None }}')">
+                    Thêm vào giỏ hàng
+                </button>
             </div>
         </div>
     </div>
@@ -40,6 +43,8 @@
     </ul>
 </div>
 {% endif %}
+
+{% include 'layout/add_cart_modal.html' %}
 
 
 <script>

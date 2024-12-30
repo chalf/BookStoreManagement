@@ -111,7 +111,7 @@ class BookView(ManagerPermissionView):
         }
     }
     column_formatters = {
-        'original_price': lambda view, context, model, name: f"{getattr(model, name):,} VNĐ",
+        'original_price': lambda view, context, model, name: f"{getattr(model, name):,} đ",
     }
     form_extra_fields = {
         'imported_quantity': IntegerField(label='Số lượng nhập hàng', validators=[
