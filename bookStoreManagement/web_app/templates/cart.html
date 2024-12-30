@@ -10,7 +10,7 @@
         <!-- Cart Items -->
         <div class="col-lg-8">
             {% for prod in session[cart_key].values() %}
-            <div class="card mb-3">
+            <div class="card mb-3" id="cart{{ prod.id }}">
                 <div class="row g-0">
                     <div class="col-md-4">
                         <img src="{{ prod.image }}" class="img-fluid rounded-start" alt="{{ prod.title }}">
@@ -20,12 +20,11 @@
                             <h5 class="card-title">{{ prod.title }}</h5>
                             <p class="card-text">Giá: {{ "{:,.0f}".format(prod.price) }} đ</p>
                             <div class="input-group">
-                                <button class="btn btn-outline-secondary btn-sm" type="button">-</button>
-                                <input type="text" class="form-control text-center" value="{{ prod.purchase_quantity }}" style="width: 50px;">
-                                <button class="btn btn-outline-secondary btn-sm" type="button">+</button>
+                                <input type="number" id="ip-in-cart-{{prod.id}}" class="form-control text-center" value="{{ prod.purchase_quantity }}"
+                                       style="width: 50px;" onblur="updateCart({{ prod.id }}, this)" min="0">
                             </div>
                             <p class="card-text mt-2">
-                                <button class="btn btn-danger btn-sm">Xóa</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteCart({{ prod.id }})">Xóa</button>
                             </p>
                         </div>
                     </div>
@@ -37,16 +36,16 @@
         <!-- Cart Summary -->
         <div class="col-lg-4">
             <div class="card">
-                <div class="card-body">
+                <form class="card-body" id="payment-method-form" action="/payments">
                     <h5 class="card-title">Cart Summary</h5>
                     <hr>
                     <p class="card-text d-flex justify-content-between">
                         <span>Tổng sản phẩm:</span>
-                        <span>{{ cart_stats.total_quantity }}</span>
+                        <span class="cart-counter">{{ cart_stats.total_quantity }}</span>
                     </p>
                     <p class="card-text d-flex justify-content-between">
                         <span>Thành tiền:</span>
-                        <span>{{ "{:,.0f}".format(cart_stats.total_amount) }} đ</span>
+                        <span class="cart-amount">{{ "{:,.0f}".format(cart_stats.total_amount) }} đ</span>
                     </p>
                     <p class="card-text d-flex justify-content-between">
                         <span>Giảm giá:</span>
@@ -55,13 +54,37 @@
                     <hr>
                     <p class="card-text d-flex justify-content-between fw-bold">
                         <span>Tổng tiền:</span>
-                        <span>{{ "{:,.0f}".format(cart_stats.total_amount) }} đ</span>
+                        <span class="cart-amount">{{ "{:,.0f}".format(cart_stats.total_amount) }} đ</span>
                     </p>
-                    <button class="btn btn-primary w-100">Thanh toán</button>
-                </div>
+
+                    <h5 class="mb-3">Phương thức thanh toán</h5>
+                    <!-- Thanh toán tại cửa hàng -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="payAtStore"
+                               value="store" checked>
+                        <label class="form-check-label" for="payAtStore">
+                            Thanh toán tại cửa hàng
+                        </label>
+                    </div>
+
+                    <!-- Thanh toán bằng PayPal -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="payWithPaypal"
+                               value="paypal">
+                        <label class="form-check-label" for="payWithPaypal">
+                            Thanh toán bằng PayPal
+                        </label>
+                    </div>
+                    {% if current_user.is_authenticated %}
+                    <button type="submit" class="btn btn-primary w-100">Thanh toán</button>
+                    {% else %}
+                    <p class="mt-1">Vui lòng <a href="/login?next=/cart">đăng nhập</a> để thanh toán</p>
+                    {% endif %}
+                </form>
             </div>
         </div>
     </div>
     {% endif %}
 </div>
+
 {% endblock %}

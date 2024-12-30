@@ -37,3 +37,38 @@ function addToCart(id, name, price, image){
     })
 }
 
+function updateCartSummary(data) {
+    let amounts = document.getElementsByClassName("cart-amount");
+    for (let item of amounts){
+        item.innerHTML = data.total_amount.toLocaleString() + " đ";
+    }
+    amounts = document.getElementsByClassName("cart-counter");
+    for (let item of amounts){
+        item.innerHTML = data.total_quantity;
+    }
+}
+
+function updateCart(bookId, obj) {
+    fetch(`/api/carts/${bookId}`, {
+        method: "put",
+        body: JSON.stringify({
+            "quantity": obj.value
+        }),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    }).then(res => res.json()).then(data => {
+        updateCartSummary(data);
+    })
+}
+
+function deleteCart(bookId) {
+    if (confirm("Bạn chắc chắn xóa không?") === true) {
+        fetch(`/api/carts/${bookId}`, {
+            method: "delete"
+        }).then(res => res.json()).then(data => {
+            updateCartSummary(data);
+            document.getElementById(`cart${bookId}`).style.display = "none";
+        });
+    }
+}

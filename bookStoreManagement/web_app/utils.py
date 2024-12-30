@@ -1,12 +1,13 @@
 import cloudinary.uploader
 from flask_login import current_user
-from werkzeug.datastructures import FileStorage
 from web_app import app
 from flask_admin.contrib.sqla import typefmt
 import json
 import os
 from datetime import datetime
 from flask import session
+from requests.auth import HTTPBasicAuth
+import requests
 
 
 # Lấy public_id từ url ảnh trên cloudinary
@@ -67,6 +68,11 @@ def write_config_json(limit_edit_quantity, max_quantity):
         f.write(json.dumps(config_data, indent=4))
 
 
+def get_cart_key():
+    cart_key = f'cart_{current_user.id}' if current_user.is_authenticated else 'guest_cart'
+    return cart_key
+
+
 def stats_cart(cart):
     # tổng số lượng và tổng tiền
     total_quantity, total_amount = 0, 0
@@ -99,6 +105,21 @@ def merge_cart():
                 user_cart[id] = item
 
     session[user_cart_key] = user_cart
+
+
+def approve_payment(order_id):
+    import key
+    api_link = f'https://api-m.sandbox.paypal.com/v2/checkout/orders/{order_id}/capture'
+    client_id = key.PAYPAL_BUSINESS_CLIENT_ID
+    secret = key.PAYPAL_BUSINESS_SECRET
+    basic_auth = HTTPBasicAuth(client_id, secret)
+    headers = {
+        "Content-Type": "application/json",
+    }
+    response = requests.post(url=api_link, headers=headers, auth=basic_auth)
+    response.raise_for_status()
+    json_data = response.json()
+    return json_data
 
 
 if __name__ == '__main__':

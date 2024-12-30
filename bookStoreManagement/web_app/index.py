@@ -10,9 +10,10 @@ from models import CustomerType
 
 @app.context_processor
 def common_response():
+    cart_key = utils.get_cart_key()
     return {
         'categories': dao.get_categories(),
-        # 'cart_stats': utils.stats_cart(session.get('cart'))
+        'cart_stats': utils.stats_cart(session.get(cart_key))
     }
 
 
@@ -103,9 +104,7 @@ def update_user():
 
 @app.route('/cart/')
 def get_cart():
-    cart_key = f'cart_{current_user.id}' if current_user.is_authenticated else 'guest_cart'
-    cart = utils.stats_cart(session.get(cart_key))
-    return render_template('cart.html', cart_stats=cart, cart_key=cart_key)
+    return render_template('cart.html', cart_key=utils.get_cart_key())
 
 
 @app.route('/api/carts/', methods=['POST'])
@@ -127,7 +126,7 @@ def add_to_cart():
         }
     }
     """
-    cart_key = f'cart_{current_user.id}' if current_user.is_authenticated else 'guest_cart'
+    cart_key = utils.get_cart_key()
     cart = session.get(cart_key, {})
 
     id = str(request.json.get('id'))
@@ -150,6 +149,46 @@ def add_to_cart():
     return jsonify(utils.stats_cart(cart))
 
 
+@app.route('/api/carts/<book_id>', methods=['PUT'])
+def update_cart(book_id):
+    cart_key = utils.get_cart_key()
+    cart = session.get(cart_key)
+    print()
+    if cart and book_id in cart:
+        quantity = int(request.json.get('quantity', 0))
+        print(quantity)
+        cart[book_id]['purchase_quantity'] = quantity
+        session[cart_key] = cart
+    return jsonify(utils.stats_cart(cart))
+
+
+@app.route('/api/carts/<book_id>', methods=['DELETE'])
+def delete_cart(book_id):
+    card_key = utils.get_cart_key()
+    cart = session.get(card_key)
+    if cart and book_id in cart:
+        del cart[book_id]
+        session[card_key] = cart
+
+    return jsonify(utils.stats_cart(cart))
+
+
+@app.route('/payments/')
+def one_step_before_pay():
+    import key
+    if request.args.get('paymentMethod').__eq__('paypal'):
+        return render_template('payment_by_paypal.html', client_id=key.PAYPAL_BUSINESS_CLIENT_ID,
+                               currency=key.IB_TAX_APP_PRICE_CURRENCY)
+    elif request.args.get('paymentMethod').__eq__('store'):
+        return render_template('payment_at_store.html')
+    return '<h1>404 - Not Found</h1>'
+
+
+@app.route("/payments/<order_id>/capture", methods=["POST"])
+def capture_payment(order_id):  # Checks and confirms payment
+    captured_payment = utils.approve_payment(order_id)
+    # print(captured_payment) # or you can do some checks from this captured data details
+    return jsonify(captured_payment)
 
 
 
