@@ -12,7 +12,7 @@
             return actions.order.create({
                 purchase_units: [{
                     amount: {
-                        value: '{{ cart_stats.total_amount }}' // Can also reference a variable or function
+                        value: '{{ total_amount }}' // Can also reference a variable or function
                     }
                 }]
             });

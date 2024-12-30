@@ -3,8 +3,12 @@
 <!-- Shopping Cart -->
 <div class="container my-5">
     <h2 class="text-center mb-4">Giỏ hàng mua sắm của bạn</h2>
-    {% if cart_key not in session %}
-    <div class="alert alert-info mt-1">KHÔNG có sản phẩm nào trong giỏ!</div>
+    {% if cart_key not in session or not session.get(cart_key) %}
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% else %}
+        <div class="alert alert-info mt-1">KHÔNG có sản phẩm nào trong giỏ!</div>
+        {% endif %}
     {% else %}
     <div class="row">
         <!-- Cart Items -->

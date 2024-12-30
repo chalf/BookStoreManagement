@@ -26,7 +26,7 @@ def index():
     page_size = app.config['PAGE_SIZE']
     num_of_books = dao.count_books()
     return render_template('index.html', pictures=pictures, books=books,
-                           num_of_books=math.ceil(num_of_books/page_size))
+                           num_of_books=math.ceil(num_of_books / page_size))
 
 
 @app.route('/login/', methods=['GET', 'POST'])
@@ -96,7 +96,7 @@ def update_user():
     if request.files.get('avatar'):
         dao.update_user_avatar(request.files.get('avatar'))
         return make_response('', 200)
-    else: # nếu là request chỉnh sửa thông tin
+    else:  # nếu là request chỉnh sửa thông tin
         data = request.form
         dao.update_user(data)
         return redirect('/user/details')
@@ -176,10 +176,22 @@ def delete_cart(book_id):
 @app.route('/payments/')
 def one_step_before_pay():
     import key
+    cart_key = utils.get_cart_key()
+    is_valid, message = dao.check_quantity(cart_key)
+    if not is_valid:
+        return render_template('cart.html', error=message)
+
     if request.args.get('paymentMethod').__eq__('paypal'):
+        cart_stats = utils.stats_cart(session.get(utils.get_cart_key()))
+        usd = utils.convert_VND_to_USD(cart_stats['total_amount'])
         return render_template('payment_by_paypal.html', client_id=key.PAYPAL_BUSINESS_CLIENT_ID,
-                               currency=key.IB_TAX_APP_PRICE_CURRENCY)
+                               currency=key.IB_TAX_APP_PRICE_CURRENCY, total_amount=usd)
+
     elif request.args.get('paymentMethod').__eq__('store'):
+        cart_key = utils.get_cart_key()
+        cart = session.get(cart_key)
+        dao.create_order(cart=cart, is_online_payment=False)
+        session[cart_key] = {}  # Đặt thành công thì clean giỏ
         return render_template('payment_at_store.html')
     return '<h1>404 - Not Found</h1>'
 
@@ -188,10 +200,59 @@ def one_step_before_pay():
 def capture_payment(order_id):  # Checks and confirms payment
     captured_payment = utils.approve_payment(order_id)
     # print(captured_payment) # or you can do some checks from this captured data details
+    if captured_payment.get('status').__eq__('COMPLETED'):
+        cart_key = utils.get_cart_key()
+        cart = session.get(cart_key)
+        dao.create_order(cart=cart, is_online_payment=True)
+        session[cart_key] = {}  # Thanh toán thành công thì clean giỏ
     return jsonify(captured_payment)
 
+
+@app.route('/test/')
+def test():
+    return jsonify({'id': '6VB599845B828553W', 'status': 'COMPLETED', 'payment_source': {
+        'paypal': {'email_address': 'hieudtn3@gmail.com', 'account_id': 'SBAJDUJC74RRY', 'account_status': 'UNVERIFIED',
+                   'name': {'given_name': 'Test', 'surname': 'Ting'}, 'address': {'country_code': 'VN'}}},
+                    'purchase_units': [{'reference_id': 'default', 'shipping': {'name': {'full_name': 'Test Ting'},
+                                                                                'address': {
+                                                                                    'address_line_1': 'Nguyen Trai',
+                                                                                    'admin_area_2': 'QUan 5',
+                                                                                    'admin_area_1': 'HỒ CHÍ MINH',
+                                                                                    'country_code': 'VN'}},
+                                        'payments': {'captures': [{'id': '91F01807J3540224W', 'status': 'COMPLETED',
+                                                                   'amount': {'currency_code': 'USD', 'value': '0.20'},
+                                                                   'final_capture': True,
+                                                                   'seller_protection': {'status': 'ELIGIBLE',
+                                                                                         'dispute_categories': [
+                                                                                             'ITEM_NOT_RECEIVED',
+                                                                                             'UNAUTHORIZED_TRANSACTION']},
+                                                                   'seller_receivable_breakdown': {
+                                                                       'gross_amount': {'currency_code': 'USD',
+                                                                                        'value': '0.20'},
+                                                                       'paypal_fee': {'currency_code': 'USD',
+                                                                                      'value': '0.20'},
+                                                                       'net_amount': {'currency_code': 'USD',
+                                                                                      'value': '0.00'}}, 'links': [{
+                                                                                                                       'href': 'https://api.sandbox.paypal.com/v2/payments/captures/91F01807J3540224W',
+                                                                                                                       'rel': 'self',
+                                                                                                                       'method': 'GET'},
+                                                                                                                   {
+                                                                                                                       'href': 'https://api.sandbox.paypal.com/v2/payments/captures/91F01807J3540224W/refund',
+                                                                                                                       'rel': 'refund',
+                                                                                                                       'method': 'POST'},
+                                                                                                                   {
+                                                                                                                       'href': 'https://api.sandbox.paypal.com/v2/checkout/orders/6VB599845B828553W',
+                                                                                                                       'rel': 'up',
+                                                                                                                       'method': 'GET'}],
+                                                                   'create_time': '2024-12-30T14:53:16Z',
+                                                                   'update_time': '2024-12-30T14:53:16Z'}]}}],
+                    'payer': {'name': {'given_name': 'Test', 'surname': 'Ting'}, 'email_address': 'hieudtn3@gmail.com',
+                              'payer_id': 'SBAJDUJC74RRY', 'address': {'country_code': 'VN'}}, 'links': [
+            {'href': 'https://api.sandbox.paypal.com/v2/checkout/orders/6VB599845B828553W', 'rel': 'self',
+             'method': 'GET'}]})
 
 
 if __name__ == '__main__':
     from admin import admin
+
     app.run(debug=True, port=2357)

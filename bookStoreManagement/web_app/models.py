@@ -95,6 +95,8 @@ class Order(db.Model):
     customer_id = Column(Integer, ForeignKey('customer.id'), nullable=False)
 
 
+
+
 class OrderDetail(db.Model):
     order_id = Column(ForeignKey(Order.id), primary_key=True)
     book_id = Column(ForeignKey(Book.id), primary_key=True)
@@ -222,8 +224,6 @@ if __name__ == '__main__':
         #           first_name='Hieu', last_name='Duong', phone_number='0999999', role=StaffRole.ADMIN)
         # db.session.add(staff)
         # db.session.commit()
-        ad = db.session.get(Book, 3)
-        ad.quantity = 0
+        ad = Order(status=OrderStatus.PAID, price_reduction=0, customer_id=1)
         db.session.add(ad)
         db.session.commit()
-        print(ad.quantity)

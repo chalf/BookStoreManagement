@@ -1,6 +1,6 @@
 import cloudinary.uploader
 from flask_login import current_user
-from web_app import app
+from web_app import app, mail
 from flask_admin.contrib.sqla import typefmt
 import json
 import os
@@ -8,6 +8,7 @@ from datetime import datetime
 from flask import session
 from requests.auth import HTTPBasicAuth
 import requests
+from flask_mail import Message
 
 
 # Lấy public_id từ url ảnh trên cloudinary
@@ -88,6 +89,11 @@ def stats_cart(cart):
     }
 
 
+def convert_VND_to_USD(vnd):
+    """ Giả sử 1 USD = 25.000 VND """
+    return vnd/25000
+
+
 def merge_cart():
     try:
         guest_cart = session.pop('guest_cart')
@@ -122,9 +128,13 @@ def approve_payment(order_id):
     return json_data
 
 
+def send_mail():
+    msg = Message('This is the title', sender='noreply@demo.com', recipients=['hieucuteom@gmail.com'])
+    msg.body = 'Hey, this is a testing mail. Blalala....'
+    mail.send(msg)
+
+
 if __name__ == '__main__':
-    dic = {
-        '1': 11,
-        True: ('p',)
-    }
+    with app.app_context():
+        send_mail()
 

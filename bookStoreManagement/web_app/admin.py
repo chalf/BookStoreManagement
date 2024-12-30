@@ -101,7 +101,6 @@ class BookView(ManagerPermissionView):
         'authors': 'Các tác giả',
         'writers': 'Thêm tác giả'
     }
-    column_editable_list = ['title', 'original_price', 'active']
     inline_models = [Author, ]
     form_columns = ['isbn', 'title', 'description', 'original_price', 'quantity', 'imported_quantity',
                     'active', 'categories', 'images_preview', 'images', 'upload_images', 'authors', 'writers']

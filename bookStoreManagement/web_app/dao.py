@@ -1,3 +1,6 @@
+from flask import session
+from sqlalchemy.exc import NoResultFound
+
 from models import *
 import datetime
 from flask_login import current_user
@@ -87,9 +90,43 @@ def count_books():
     return Book.query.count()
 
 
-#     -------------------    PRODUCT    -----------------------
 def get_categories():
     return Category.query.all()
+
+
+def check_quantity(cart_key):
+    cart = session.get(cart_key, {})
+    for item in cart.values():
+        try:
+            book = Book.query.filter_by(id=item['id']).one()
+            if item['purchase_quantity'] > book.quantity:
+                return False, f"Sản phẩm '{book.title}' chỉ còn {book.quantity} sản phẩm trong kho."
+        except NoResultFound:
+            return False, f"Sản phẩm với ID {item['id']} không tồn tại."
+    return True, None
+
+
+#     -------------------    ORDER    -----------------------
+def create_order(cart, is_online_payment, price_reduction=0):
+    order = Order(status=OrderStatus.PAID if is_online_payment else OrderStatus.ORDERED,
+                  price_reduction=price_reduction, customer_id=current_user.id)
+    db.session.add(order)
+    # Tạo các order_details
+    for book_id, item in cart.items():
+        if item.get('purchase_quantity'):
+            order_detail = OrderDetail(order=order, book_id=book_id, price=item['price'],
+                                       quantity=item['purchase_quantity'])
+            db.session.add(order_detail)
+
+        # Cập nhật số lượng sản phẩm trong kho
+        book = Book.query.get(book_id)
+        if book:
+            if book.quantity >= item['purchase_quantity']:
+                book.quantity -= item['purchase_quantity']
+            else:
+                raise ValueError(f"Không đủ số lượng cho sách '{book.title}'.")
+    db.session.commit()
+    return order
 
 
 if __name__ == '__main__':
