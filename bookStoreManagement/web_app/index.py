@@ -153,10 +153,8 @@ def add_to_cart():
 def update_cart(book_id):
     cart_key = utils.get_cart_key()
     cart = session.get(cart_key)
-    print()
     if cart and book_id in cart:
         quantity = int(request.json.get('quantity', 0))
-        print(quantity)
         cart[book_id]['purchase_quantity'] = quantity
         session[cart_key] = cart
     return jsonify(utils.stats_cart(cart))
@@ -206,6 +204,90 @@ def capture_payment(order_id):  # Checks and confirms payment
         dao.create_order(cart=cart, is_online_payment=True)
         session[cart_key] = {}  # Thanh toán thành công thì clean giỏ
     return jsonify(captured_payment)
+
+
+@app.route('/sales/')
+def sale_book():
+    # Thỏa mãn TẤT CẢ 3 điều kiện mới vào được:
+    # 1. Phải đăng nhập
+    # 2. Phải là nhân viên
+    # 3. Phải là nhân viên bán hàng hoặc là ADMIN
+    if (not current_user.is_authenticated or not current_user.is_staff() or
+            (not current_user.is_sale_agent() and not current_user.is_admin())):
+        return '<h1>403 - Forbidden</h1>'
+
+    kw = request.args.get('kw-at-sale-page')
+    books = dao.get_books(kw=kw)
+    data = utils.stats_cart(session.get('order'))
+    return render_template('book_seller.html', books=books, data=json.dumps(data))
+
+
+@app.route('/api/sale-book', methods=['POST'])
+def create_order_at_sale_page():
+    """
+        session['order']: {
+            "1": {
+                "id": 1
+                "isbn": "1",
+                "title": "abc",
+                "price": 123,
+                "purchase_quantity": 1
+            }, "2": {
+                "id": "2",
+                "isbn": "442121",
+                "title": "abc",
+                "price": 123,
+                "purchase_quantity": 1
+            }
+        }
+        """
+    cart = session.get('order')
+    if not cart:
+        cart = {}
+    id = str(request.json.get('id'))
+    isbn = request.json.get('isbn')
+    name = request.json.get('name')
+    price = request.json.get('price')
+
+    if id not in cart:
+        cart[id] = {
+            'id': id,
+            'isbn': isbn,
+            'name': name,
+            'price': price,
+            'purchase_quantity': 1
+        }
+
+    session['order'] = cart
+    data = utils.stats_cart(cart)
+    return jsonify(data)
+
+
+@app.route('/api/sale-book/<book_id>', methods=['PUT'])
+def update_order_at_sale_page(book_id):
+    cart = session.get('order')
+    if cart and book_id in cart:
+        quantity = int(request.json.get('quantity', 0))
+        cart[book_id]['purchase_quantity'] = quantity
+        session['order'] = cart
+    return jsonify(utils.stats_cart(cart))
+
+
+@app.route('/api/sale-book/<book_id>', methods=['DELETE'])
+def delete_order_at_sale_page(book_id):
+    cart = session.get('order')
+    if cart and book_id in cart:
+        del cart[book_id]
+        session['order'] = cart
+
+    return jsonify(utils.stats_cart(cart))
+
+
+@app.route('/api/orders/', methods=['POST'])
+def create_order():
+    order = dao.create_order_case_selling_at_store(cart=session.get('order'))
+    session['order'] = {}
+    return jsonify({'status': 201})
 
 
 @app.route('/test/')

@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, E
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 from enum import Enum as StatusAndType
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 import utils
 import hashlib
 
@@ -81,7 +81,7 @@ class OrderStatus(StatusAndType):
     ORDERED = 1,
     PAID = 2
     CANCELED = 3
-    RECEIVED = 4
+    RECEIVED = 4 # Nhận được hàng khi đã thanh toán online, hoặc mua từ cửa hàng, hoặc đã tới lấy hàng đặt trước
 
 
 class Order(db.Model):
@@ -92,9 +92,21 @@ class Order(db.Model):
     order_details = relationship('OrderDetail', backref='order')
     staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
     # nullable=True là để quan hệ many-to-one khi Staff xóa thì khóa ngoại sẽ SET NULL
-    customer_id = Column(Integer, ForeignKey('customer.id'), nullable=False)
+    customer_id = Column(Integer, ForeignKey('customer.id'), nullable=True)
 
 
+# Sau khi tạo đơn hàng thành công thì gởi mail cho Khách hàng đã thanh toán bằng paypal, hoặc đặt trước
+@event.listens_for(Order, 'after_insert')
+def after_entity_insert(mapper, connection, target):
+    # books = [od.book.title for od in target.order_details]  # AttributeError: 'NoneType' object has no attribute 'title'
+    sub = 'Đơn đặt hàng của bạn được tạo thành công'
+    content = f'''Xin chào {current_user.first_name} {current_user.last_name},
+Đây là thông tin đơn hàng của bạn:
+    Ngày tạo: {target.created_date}
+    Trạng thái: {target.status}
+Cảm ơn bạn đã mua hàng'''
+    if target.customer_id:
+        utils.send_mail(sub, content)
 
 
 class OrderDetail(db.Model):
@@ -160,6 +172,9 @@ class Staff(Customer):
     active = Column(Boolean, default=True)
     is_warehouse_staff = Column(Boolean, nullable=False, default=False)
     agent_orders = relationship(Order, backref='sales_agent', lazy=True)
+
+    def is_sale_agent(self):
+        return self.role == StaffRole.SALES_AGENT
 
 
 class Shift(db.Model):

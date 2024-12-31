@@ -128,13 +128,13 @@ def approve_payment(order_id):
     return json_data
 
 
-def send_mail():
-    msg = Message('This is the title', sender='noreply@demo.com', recipients=['hieucuteom@gmail.com'])
-    msg.body = 'Hey, this is a testing mail. Blalala....'
+def send_mail(sub, content):
+    msg = Message(subject=sub, sender='noreply@demo.com', recipients=[current_user.email])
+    msg.body = content
     mail.send(msg)
 
 
-if __name__ == '__main__':
-    with app.app_context():
-        send_mail()
+# if __name__ == '__main__':
+#     with app.app_context():
+#         send_mail()
 

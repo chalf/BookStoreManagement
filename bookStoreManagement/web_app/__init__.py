@@ -21,7 +21,7 @@ app.config['PAGE_SIZE'] = 3
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USERNAME'] = '2151053018hieu@ou.edu.vn'
-app.config['MAIL_PASSWORD'] = '3'
+app.config['MAIL_PASSWORD'] = '4'
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 

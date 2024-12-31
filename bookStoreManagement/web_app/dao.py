@@ -68,22 +68,30 @@ def update_user_avatar(file):
 
 
 #     -------------------    PRODUCT    -----------------------
-def get_books(cate_id=None, kw=None, page_number=1):
-    books = Book.query.filter_by(active=True)
-    if cate_id:
-        books = (books.join(category_product, Book.id == category_product.c.book_id)
-                 .filter(category_product.c.category_id == cate_id))
-    if kw:
-        books = books.join(author_book, Book.id == author_book.c.book_id, isouter=True)\
-                     .join(Author, author_book.c.author_id == Author.id, isouter=True)\
-                     .filter(or_(Book.title.icontains(kw), Author.name.icontains(kw)))\
-                     .distinct()
-
+def pagination(books, page_number):
+    """ :param books: đối tượng query """
     page_size = app.config['PAGE_SIZE']
     start = (page_number - 1) * page_size
     books = books.slice(start, start + page_size)
 
     return books.all()
+
+
+def get_books(cate_id=None, kw=None, page_number=1):
+    books = Book.query.filter_by(active=True)
+    if cate_id:
+        books = (books.join(category_product, Book.id == category_product.c.book_id)
+                 .filter(category_product.c.category_id == cate_id))
+        return books.all()
+
+    if kw:
+        books = books.join(author_book, Book.id == author_book.c.book_id, isouter=True)\
+                     .join(Author, author_book.c.author_id == Author.id, isouter=True)\
+                     .filter(or_(Book.title.icontains(kw), Book.isbn.icontains(kw), Author.name.icontains(kw)))\
+                     .distinct()
+        return books.all()
+
+    return pagination(books, page_number)
 
 
 def count_books():
@@ -127,6 +135,29 @@ def create_order(cart, is_online_payment, price_reduction=0):
                 raise ValueError(f"Không đủ số lượng cho sách '{book.title}'.")
     db.session.commit()
     return order
+
+
+def create_order_case_selling_at_store(cart, price_reduction=0):
+    order = Order(status=OrderStatus.RECEIVED, price_reduction=price_reduction, staff_id=current_user.id)
+    db.session.add(order)
+    # Đoạn này lặp code với hàm trên
+    # Tạo các order_details
+    for book_id, item in cart.items():
+        if item.get('purchase_quantity'):
+            order_detail = OrderDetail(order=order, book_id=book_id, price=item['price'],
+                                       quantity=item['purchase_quantity'])
+            db.session.add(order_detail)
+
+        # Cập nhật số lượng sản phẩm trong kho
+        book = Book.query.get(book_id)
+        if book:
+            if book.quantity >= item['purchase_quantity']:
+                book.quantity -= item['purchase_quantity']
+            else:
+                raise ValueError(f"Không đủ số lượng cho sách '{book.title}'.")
+    db.session.commit()
+    return order
+
 
 
 if __name__ == '__main__':

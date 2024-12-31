@@ -1,0 +1,103 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}
+    <title>Trang bán sách</title>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Search Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <form class="input-group">
+                <input type="text" class="form-control" name="kw-at-sale-page" placeholder="Tìm theo mã ISBN, tên sách hoặc tên tác giả">
+                <button class="btn btn-primary" type="submit">Tìm kiếm</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Book List -->
+        <div class="col-md-6">
+            <h5 class="mb-3">Thêm vào đơn hàng</h5>
+            <table class="table table-bordered" id="bookList">
+                <thead class="table-secondary">
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col">ISBN</th>
+                    <th scope="col">Tên sách</th>
+                    <th scope="col">Giá</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for book in books %}
+                <tr>
+                    <td><input type="checkbox" class="form-check-input"
+                    onchange="if (this.checked) addOrder('{{ book.id }}', '{{ book.isbn }}', '{{ book.title }}', {{ book.original_price }})"></td>
+                    <td>{{ book.isbn }}</td>
+                    <td>{{ book.title }}</td>
+                    <td>{{ "{:,.0f}".format(book.original_price) }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Order Section -->
+        <div class="col-md-6">
+            <h5 class="mb-3">Đơn hàng</h5>
+            <table class="table table-bordered" id="orderList">
+                <thead class="table-secondary">
+                <tr>
+                    <th scope="col">ISBN</th>
+                    <th scope="col">Tên sách</th>
+                    <th scope="col">Số lượng</th>
+                    <th scope="col">Giá</th>
+                    <th scope="col">Xóa</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if 'order' in session %}
+                {% for prod in session['order'].values() %}
+                <tr id="order{{ prod.id }}">
+                    <td>{{ prod.isbn }}</td>
+                    <td>{{ prod.name }}</td>
+                    <td><input type="number" class="form-control quantity" value="{{ prod.purchase_quantity }}" min="1"
+                        onblur="updateOrder({{ prod.id }}, this)"></td>
+                    <td>{{ prod.price }}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="deleteOrder({{ prod.id }})">&times;</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+                </tbody>
+            </table>
+
+            <!-- Order Summary -->
+            <div class="d-flex justify-content-between mt-3">
+                <div>
+                    <!-- Không được sửa bất kỳ điều gì ở 2 dòng dưới Kể cả dấu cách, hay xuống dòng -->
+                    <p class="mb-1" id="total">Tổng tiền: <strong> </strong></p>
+                    <p class="mb-1" id="change">Tiền thối: <strong> </strong></p>
+                </div>
+                <div>
+                    <input type="number" class="form-control" placeholder="Tiền khách đưa">
+                </div>
+            </div>
+            <div class="text-end mt-4">
+                <button class="btn btn-success" onclick="createOrderToSerVer()">Tạo đơn hàng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/bookSeller.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Parse data từ Python thành JSON object
+    const data = {{ data | safe if data else 0 }};
+    updateUI(data);
+});
+</script>
+{% endblock %}
