@@ -5,7 +5,7 @@ from web_app import app, login
 from flask import render_template, redirect, request, jsonify, make_response, flash, url_for, session
 import dao
 from flask_login import login_user, logout_user, current_user, login_required
-from models import CustomerType
+from models import CustomerType, OrderStatus
 
 
 @app.context_processor
@@ -81,6 +81,16 @@ def register():
 @app.template_filter('customer_type')
 def customer_type_filter(type):
     return 'Khách hàng thông thường' if type == CustomerType.REGULAR else 'Khách hàng thân thiết'
+
+
+@app.template_filter('order_status')
+def customer_type_filter(status):
+    if status == OrderStatus.ORDERED:
+        return 'Chưa lấy hàng'
+    if status == OrderStatus.PAID or status == OrderStatus.RECEIVED:
+        return 'Hoàn thành'
+    if status == OrderStatus.CANCELED:
+        return 'Đã hủy'
 
 
 @app.route('/user/details/')
@@ -288,6 +298,20 @@ def create_order():
     order = dao.create_order_case_selling_at_store(cart=session.get('order'))
     session['order'] = {}
     return jsonify({'status': 201})
+
+
+@app.route('/api/get-orders/')
+def user_orders_process():
+    status = request.args.get('status')
+    rs = dao.get_order_of_user(status)
+    return jsonify(rs)
+    # return render_template('my_order.html', orders=rs)
+
+
+@app.route('/user/my-order/')
+@login_required
+def user_orders():
+    return render_template('my_order.html')
 
 
 @app.route('/test/')

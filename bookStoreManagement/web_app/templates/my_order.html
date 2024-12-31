@@ -1,0 +1,46 @@
+{% extends 'layout/base.html' %}
+{% block title %}
+    <title>Đơn hàng của tôi</title>
+{% endblock %}
+{% block cssjs %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/myorder.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="tabs mt-3">
+    <div class="tab active" data-tab="all">Tất cả</div>
+    <div class="tab" data-tab="ordered">Chưa lấy</div>
+    <div class="tab" data-tab="completed">Hoàn thành</div>
+    <div class="tab" data-tab="cancelled">Đã hủy</div>
+</div>
+
+<div class="content">
+    <ul class="order-list"></ul>
+</div>
+
+<script>
+    const tabs = document.querySelectorAll('.tab');
+    const orderList = document.querySelector('.order-list');
+
+    async function fetchOrders(status = null) {
+        const response = await fetch(`/api/get-orders${status ? `?status=${status}` : ''}`);
+        const orders = await response.json();
+        orderList.innerHTML = orders.map(o => `<li>Order ${o.id} - Status: ${o.status}</li>`).join('');
+    }
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            const status = tab.getAttribute('data-tab');
+            fetchOrders(status === 'all' ? null : status);
+        });
+    });
+
+    // Load all orders on page load
+    fetchOrders();
+</script>
+
+
+{% endblock %}

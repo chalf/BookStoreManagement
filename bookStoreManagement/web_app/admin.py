@@ -1,10 +1,12 @@
+import datetime
+
 from flask_admin import Admin, AdminIndexView, expose, BaseView
 from flask_admin.contrib.sqla import ModelView
 from markupsafe import Markup
 from models import *
 from wtforms import PasswordField, IntegerField, Field, MultipleFileField
 from flask_login import current_user
-from flask import redirect, flash
+from flask import redirect, flash, request
 from sqlalchemy.orm import configure_mappers
 import utils
 from wtforms.validators import NumberRange
@@ -30,6 +32,11 @@ class MyAdmin(AdminIndexView):
 
 
 admin = Admin(app=app, name='Trang quản trị cửa hàng sách', template_mode='bootstrap4', index_view=MyAdmin())
+
+
+class AdminPermissionBaseView(BaseView):
+    def is_accessible(self):
+        return getattr(current_user, 'role', None) == StaffRole.ADMIN
 
 
 class AdminPermissionModelView(ModelView):
@@ -162,6 +169,24 @@ class BookView(ManagerPermissionView):
                 url = cloudinary.uploader.upload(img).get('secure_url')
                 model.images.append(Image(image=url, book=model))
 
+
+class StatsView(AdminPermissionBaseView):
+    @expose('/')
+    def index(self):  # Xử lý khi người dùng bấm vào View
+        import dao
+        year = request.args.get('year')
+        stats = dao.get_stats_by_cate_per_month(year)
+
+        # Chuẩn bị dữ liệu cho frontend
+        data = {}
+        for category_id, category_name, month, revenue in stats:
+            if category_name not in data:
+                data[category_name] = [0] * 12  # Khởi tạo doanh thu 12 tháng
+            data[category_name][month - 1] = revenue  # Gán doanh thu cho đúng tháng
+        return self.render('admin/stats.html', data=data, year=year, current_year=datetime.datetime.now().year)
+
+
+admin.add_view(StatsView(name='Thống kê doanh thu', url='stats'))
 
 admin.add_view(CustomerView(Customer, db.session))
 admin.add_view(StaffView(Staff, db.session))

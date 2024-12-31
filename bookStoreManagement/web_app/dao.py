@@ -1,13 +1,12 @@
 from flask import session
 from sqlalchemy.exc import NoResultFound
-
 from models import *
 import datetime
 from flask_login import current_user
 import cloudinary.uploader
 import cloudinary.api
 import utils
-from sqlalchemy import or_
+from sqlalchemy import or_, extract, func
 
 
 #     -------------------    USER    -----------------------
@@ -85,10 +84,10 @@ def get_books(cate_id=None, kw=None, page_number=1):
         return books.all()
 
     if kw:
-        books = books.join(author_book, Book.id == author_book.c.book_id, isouter=True)\
-                     .join(Author, author_book.c.author_id == Author.id, isouter=True)\
-                     .filter(or_(Book.title.icontains(kw), Book.isbn.icontains(kw), Author.name.icontains(kw)))\
-                     .distinct()
+        books = books.join(author_book, Book.id == author_book.c.book_id, isouter=True) \
+            .join(Author, author_book.c.author_id == Author.id, isouter=True) \
+            .filter(or_(Book.title.icontains(kw), Book.isbn.icontains(kw), Author.name.icontains(kw))) \
+            .distinct()
         return books.all()
 
     return pagination(books, page_number)
@@ -158,6 +157,45 @@ def create_order_case_selling_at_store(cart, price_reduction=0):
     db.session.commit()
     return order
 
+
+def get_stats_by_cate_per_month(year=None):
+    if year is None:
+        year = datetime.datetime.now().year  # Mặc định lấy năm hiện tại
+
+    result = db.session.query(
+        Category.id,
+        Category.name.label('category_name'),       # Cột category_name
+        extract('month', Order.created_date).label('month'),  # Cột month
+        func.sum(OrderDetail.price * OrderDetail.quantity).label('revenue')   # Cột revenue: tổng doanh thu của từng category_name
+    ).join(Book, Book.id == OrderDetail.book_id) \
+        .join(Book.categories)\
+        .join(Order, Order.id == OrderDetail.order_id) \
+        .filter(extract('year', Order.created_date) == year,
+                or_(Order.status == OrderStatus.PAID, Order.status == OrderStatus.RECEIVED)) \
+        .group_by(Category.id, Category.name, extract('month', Order.created_date)) \
+        .order_by(Category.id, extract('month', Order.created_date)) \
+        .all()
+    return result
+
+
+def get_order_of_user(status=None):
+    orders = Order.query.filter_by(customer_id=current_user.id)
+    if status:
+        if status == 'ordered':
+            status = OrderStatus.ORDERED
+        if status == 'completed':
+            status = OrderStatus.PAID
+        if status == 'cancelled':
+            status = OrderStatus.CANCELED
+
+        orders = orders.filter(Order.status == status)
+
+    result = [
+        {'id': order.id, 'status': order.status.name}
+        for order in orders.order_by(Order.id).all()
+    ]
+
+    return result
 
 
 if __name__ == '__main__':

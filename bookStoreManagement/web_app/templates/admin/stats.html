@@ -1,0 +1,51 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+<h1>Thống kê doanh thu theo thể loại sách năm {{ year }}</h1>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 col-12">
+            <form method="get" style="margin-bottom: 20px;">
+                <label for="year">Chọn năm:</label>
+                <select id="year" name="year">
+                    {% for y in range(current_year, current_year - 10, -1) %}
+                    <option value="{{ y }}">{{ y }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Thống kê</button>
+            </form>
+        </div>
+        <div class="col-md-9 col-12">
+            <canvas id="myChart" style="width:100%;"></canvas>
+        </div>
+    </div>
+</div>
+<script>
+    const data = {{ data|tojson }};
+
+    // Chuẩn bị labels và datasets cho biểu đồ
+    const labels = Array.from({ length: 12 }, (_, i) => `Tháng ${i + 1}`);
+    const datasets = [];
+
+    Object.keys(data).forEach((category, index) => {
+        datasets.push({
+            label: category,
+            data: data[category],
+            backgroundColor: `rgba(${index * 50}, ${index * 70}, ${index * 90}, 0.6)`,
+            borderColor: `rgba(${index * 50}, ${index * 70}, ${index * 90}, 1)`,
+            borderWidth: 1
+        });
+    });
+
+    new Chart("myChart", {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: datasets
+      },
+      options: {}
+    });
+
+</script>
+{% endblock %}
