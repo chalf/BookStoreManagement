@@ -121,7 +121,7 @@ class BookView(ManagerPermissionView):
     }
     form_extra_fields = {
         'imported_quantity': IntegerField(label='Số lượng nhập hàng', validators=[
-            NumberRange(min=0, max=utils.read_config_json().get('MAX_QUANTITY'))], default=0),
+            NumberRange(min=0)], default=0),
         'upload_images': MultipleFileField('Upload ảnh'),
         'images_preview': HTMLField('Hình ảnh')
     }
@@ -139,13 +139,17 @@ class BookView(ManagerPermissionView):
     def search_placeholder(self):
         return 'Tìm kiếm theo tên hoặc tác giả...'
 
-    _regulations = utils.read_config_json()
-
     def _check_quantity_limits(self, form, model, is_created):
         # Đang Cập nhật và trường imported_quantity có thay đổi (khác 0) (tức là có cập nhật trường imported_quantity)
         # và model.quantity < số hàng tồn được phép nhập hàng
         if not is_created and form.imported_quantity.data \
-                and model.quantity >= self._regulations.get('LIMIT_EDIT_QUANTITY'):
+                and model.quantity >= int(utils.read_config_json().get('LIMIT_EDIT_QUANTITY')):
+            return False
+        return True
+
+    def _check_max_quantity(self, form, model, is_created):
+        if not is_created and form.imported_quantity.data \
+                and form.imported_quantity.data >= int(utils.read_config_json().get('MAX_QUANTITY')):
             return False
         return True
 
@@ -153,7 +157,13 @@ class BookView(ManagerPermissionView):
     def update_model(self, form, model):
         if not self._check_quantity_limits(form, model, False):
             flash(
-                f'Số lượng hàng tồn phải ít hơn {self._regulations.get('LIMIT_EDIT_QUANTITY')} mới được nhập thêm hàng',
+                f'Số lượng hàng tồn phải ít hơn {utils.read_config_json().get('LIMIT_EDIT_QUANTITY')} mới được nhập thêm hàng',
+                'error')
+            return False
+
+        if not self._check_max_quantity(form, model, False):
+            flash(
+                f'Số lượng nhập hàng phải ít hơn {utils.read_config_json().get('MAX_QUANTITY')}',
                 'error')
             return False
 
@@ -186,7 +196,27 @@ class StatsView(AdminPermissionBaseView):
         return self.render('admin/stats.html', data=data, year=year, current_year=datetime.datetime.now().year)
 
 
+class RegulationView(AdminPermissionBaseView):
+    @expose('/')
+    def index(self):
+        limit_edit_quantity = request.args.get('limit-edit-quantity')
+        max_quantity = request.args.get('max-quantity')
+        if limit_edit_quantity and max_quantity:
+            utils.write_config_json(limit_edit_quantity, max_quantity)
+            flash('Cập nhật thành công')
+        dic = utils.read_config_json()
+        return self.render('admin/regulation.html', leq=dic['LIMIT_EDIT_QUANTITY'], mq=dic['MAX_QUANTITY'])
+
+
+class ClientHome(AdminPermissionBaseView):
+    @expose('/')
+    def index(self):
+        return redirect('/')
+
+
+admin.add_view(ClientHome(name='Trang mua hàng'))
 admin.add_view(StatsView(name='Thống kê doanh thu', url='stats'))
+admin.add_view(RegulationView(name='Thay đổi quy định', url='regulation'))
 
 admin.add_view(CustomerView(Customer, db.session))
 admin.add_view(StaffView(Staff, db.session))

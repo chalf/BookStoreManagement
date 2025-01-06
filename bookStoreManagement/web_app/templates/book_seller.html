@@ -82,7 +82,7 @@
                     <p class="mb-1" id="change">Tiền thối: <strong> </strong></p>
                 </div>
                 <div>
-                    <input type="number" class="form-control" placeholder="Tiền khách đưa">
+                    <input onblur="calChange(this)" type="number" class="form-control" placeholder="Tiền khách đưa">
                 </div>
             </div>
             <div class="text-end mt-4">
@@ -99,5 +99,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const data = {{ data | safe if data else 0 }};
     updateUI(data);
 });
+
+function calChange(inp){
+    const pa = document.getElementById('change');
+    const totalPara = document.getElementById('total').lastChild;
+    pa.innerHTML = Number(inp.value) - Number(totalPara.firstChild.nodeValue);
+}
 </script>
 {% endblock %}
