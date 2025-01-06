@@ -36,9 +36,11 @@ def update_last_login_date(user):
 
 
 def create_user(username, password, phone_number, first_name, last_name, email=None, address=None):
+    # validate username không được trùng lặp
     existing_user = get_user_by_username(username)
     if existing_user:
         return None
+
     password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
     customer = Customer(username=username, password=password, phone_number=phone_number, first_name=first_name,
                         last_name=last_name, email=email, address=address)
@@ -118,12 +120,19 @@ def create_order(cart, is_online_payment, price_reduction=0):
     order = Order(status=OrderStatus.PAID if is_online_payment else OrderStatus.ORDERED,
                   price_reduction=price_reduction, customer_id=current_user.id)
     db.session.add(order)
+
     # Tạo các order_details
+    order_items = []
     for book_id, item in cart.items():
         if item.get('purchase_quantity'):
             order_detail = OrderDetail(order=order, book_id=book_id, price=item['price'],
                                        quantity=item['purchase_quantity'])
             db.session.add(order_detail)
+
+            # Thêm thông tin mặt hàng vào danh sách
+            book = Book.query.get(book_id)
+            if book:
+                order_items.append(f"- {book.title}: {item['purchase_quantity']} x {item['price']} đ")
 
         # Cập nhật số lượng sản phẩm trong kho
         book = Book.query.get(book_id)
@@ -132,7 +141,22 @@ def create_order(cart, is_online_payment, price_reduction=0):
                 book.quantity -= item['purchase_quantity']
             else:
                 raise ValueError(f"Không đủ số lượng cho sách '{book.title}'.")
+
     db.session.commit()
+
+    # Sau khi tạo đơn hàng thành công thì gởi mail cho Khách hàng đã thanh toán bằng paypal, hoặc đặt trước
+    items_list = "\n".join(order_items)
+    sub = 'Đơn đặt hàng của bạn được tạo thành công'
+    content = f'''Xin chào {current_user.first_name} {current_user.last_name},
+Đây là thông tin đơn hàng của bạn:
+    Ngày tạo: {order.created_date.strftime('%d-%m-%Y %H:%M:%S')}
+    Trạng thái: {order.status}
+    Mặt hàng:
+        {items_list}
+Cảm ơn bạn đã mua hàng'''
+    if order.customer_id:
+        utils.send_mail(sub, content, [current_user.email])
+
     return order
 
 

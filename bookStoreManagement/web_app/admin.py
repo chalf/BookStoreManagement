@@ -184,7 +184,7 @@ class StatsView(AdminPermissionBaseView):
     @expose('/')
     def index(self):  # Xử lý khi người dùng bấm vào View
         import dao
-        year = request.args.get('year')
+        year = request.args.get('year', datetime.datetime.now().year)
         stats = dao.get_stats_by_cate_per_month(year)
 
         # Chuẩn bị dữ liệu cho frontend

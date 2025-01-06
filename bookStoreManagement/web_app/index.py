@@ -185,6 +185,8 @@ def delete_cart(book_id):
 def one_step_before_pay():
     import key
     cart_key = utils.get_cart_key()
+
+    # Kiểm tra số lượng hàng trong kho
     is_valid, message = dao.check_quantity(cart_key)
     if not is_valid:
         return render_template('cart.html', error=message)

@@ -95,20 +95,6 @@ class Order(db.Model):
     customer_id = Column(Integer, ForeignKey('customer.id'), nullable=True)
 
 
-# Sau khi tạo đơn hàng thành công thì gởi mail cho Khách hàng đã thanh toán bằng paypal, hoặc đặt trước
-@event.listens_for(Order, 'after_insert')
-def after_entity_insert(mapper, connection, target):
-    # books = [od.book.title for od in target.order_details]  # AttributeError: 'NoneType' object has no attribute 'title'
-    sub = 'Đơn đặt hàng của bạn được tạo thành công'
-    content = f'''Xin chào {current_user.first_name} {current_user.last_name},
-Đây là thông tin đơn hàng của bạn:
-    Ngày tạo: {target.created_date}
-    Trạng thái: {target.status}
-Cảm ơn bạn đã mua hàng'''
-    if target.customer_id:
-        utils.send_mail(sub, content)
-
-
 class OrderDetail(db.Model):
     order_id = Column(ForeignKey(Order.id), primary_key=True)
     book_id = Column(ForeignKey(Book.id), primary_key=True)

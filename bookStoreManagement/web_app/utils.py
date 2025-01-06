@@ -128,8 +128,8 @@ def approve_payment(order_id):
     return json_data
 
 
-def send_mail(sub, content):
-    msg = Message(subject=sub, sender='noreply@demo.com', recipients=[current_user.email])
+def send_mail(sub, content, mail_list):
+    msg = Message(subject=sub, sender='noreply@demo.com', recipients=mail_list)
     msg.body = content
     mail.send(msg)
 

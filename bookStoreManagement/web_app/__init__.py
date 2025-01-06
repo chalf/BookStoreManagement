@@ -24,6 +24,8 @@ app.config['MAIL_USERNAME'] = ''
 app.config['MAIL_PASSWORD'] = ''
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
+# flask-mail
+mail = Mail(app)
 
 
 # Cấu hình Cloudinary
@@ -36,9 +38,6 @@ cloudinary.config(
 
 # Flask Login object
 login = LoginManager(app=app)
-
-# flask-mail
-mail = Mail(app)
 
 
 # Cấu hình sửa lỗi CORS policy
