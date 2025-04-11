@@ -30,9 +30,9 @@ mail = Mail(app)
 
 # Cấu hình Cloudinary
 cloudinary.config(
-    cloud_name="dtufi97qw",
-    api_key="415675355348994",
-    api_secret="LJ6gCnEZUfFk3zU6OfbNb0b6jrQ",
+    cloud_name="",
+    api_key="",
+    api_secret="",
     secure=True
 )
 
